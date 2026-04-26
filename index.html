@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CourseFlow — COMP3161</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2236;
+    --border: #1e2d45;
+    --accent: #4f8ef7;
+    --accent2: #7c5cfc;
+    --green: #22d3a0;
+    --red: #f75c5c;
+    --yellow: #f7c948;
+    --text: #e8edf5;
+    --muted: #6b7a99;
+    --card: #141c2e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── AUTH SCREEN ── */
+  #auth-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .auth-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(79,142,247,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 90%, rgba(124,92,252,0.10) 0%, transparent 60%),
+      var(--bg);
+  }
+
+  .auth-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(79,142,247,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,142,247,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  .auth-card {
+    position: relative; z-index: 2;
+    width: 420px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 48px 40px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(79,142,247,0.08);
+    animation: slideUp 0.6s cubic-bezier(0.16,1,0.3,1) both;
+  }
+
+  @keyframes slideUp {
+    from { opacity:0; transform: translateY(30px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+
+  .auth-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+
+  .auth-logo span { color: var(--accent); }
+
+  .auth-sub {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 36px;
+  }
+
+  .tab-row {
+    display: flex;
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 28px;
+    gap: 4px;
+  }
+
+  .tab-btn {
+    flex: 1; padding: 9px;
+    border: none; background: transparent;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 500;
+    border-radius: 7px; cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tab-btn.active {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .form-group { margin-bottom: 16px; }
+
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 7px;
+  }
+
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus {
+    border-color: var(--accent);
+  }
+
+  .form-group select option { background: var(--surface2); }
+
+  .btn-primary {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+    margin-top: 8px;
+  }
+
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+
+  /* ── MAIN APP ── */
+  #app { display: none; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0;
+    width: 240px;
+    background: var(--card);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 0;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: -0.3px;
+  }
+
+  .sidebar-logo span { color: var(--accent); }
+
+  .sidebar-user {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: 13px;
+  }
+
+  .user-info .name { font-size: 13px; font-weight: 500; }
+  .user-info .role {
+    font-size: 11px; color: var(--muted);
+    text-transform: capitalize;
+  }
+
+  .sidebar-nav { flex: 1; padding: 12px 10px; overflow-y: auto; }
+
+  .nav-section {
+    font-size: 10px; font-weight: 600;
+    color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 12px 10px 6px;
+  }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--muted);
+    transition: all 0.15s;
+    margin-bottom: 2px;
+  }
+
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(79,142,247,0.12); color: var(--accent); }
+  .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .btn-logout {
+    width: 100%; padding: 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+  /* Main content */
+  .main {
+    margin-left: 240px;
+    min-height: 100vh;
+    padding: 32px;
+  }
+
+  .page { display: none; animation: fadeIn 0.3s ease; }
+  .page.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .page-header {
+    margin-bottom: 28px;
+    display: flex; align-items: flex-start;
+    justify-content: space-between; gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px; font-weight: 700;
+  }
+
+  .page-sub { color: var(--muted); font-size: 14px; margin-top: 3px; }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px; margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+
+  .stat-label {
+    font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px; font-weight: 700;
+  }
+
+  .stat-value.blue { color: var(--accent); }
+  .stat-value.purple { color: var(--accent2); }
+  .stat-value.green { color: var(--green); }
+  .stat-value.yellow { color: var(--yellow); }
+
+  /* Cards grid */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .course-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative; overflow: hidden;
+  }
+
+  .course-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    opacity: 0; transition: opacity 0.2s;
+  }
+
+  .course-card:hover { border-color: rgba(79,142,247,0.3); transform: translateY(-2px); }
+  .course-card:hover::before { opacity: 1; }
+
+  .course-code {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px; font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+  }
+
+  .course-name {
+    font-weight: 500; font-size: 15px;
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+
+  .course-desc {
+    color: var(--muted); font-size: 13px;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Table */
+  .table-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  th {
+    background: var(--surface);
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 13px 16px;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(30,45,69,0.5);
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(79,142,247,0.04); }
+
+  /* Badge */
+  .badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+    text-transform: capitalize;
+  }
+
+  .badge.admin    { background: rgba(247,201,72,0.15);  color: var(--yellow); }
+  .badge.lecturer { background: rgba(124,92,252,0.15);  color: var(--accent2); }
+  .badge.student  { background: rgba(79,142,247,0.15);  color: var(--accent); }
+  .badge.green    { background: rgba(34,211,160,0.15);  color: var(--green); }
+  .badge.red      { background: rgba(247,92,92,0.15);   color: var(--red); }
+
+  /* Panels */
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .panel-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px; font-weight: 700;
+    margin-bottom: 18px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* Form inside panel */
+  .inline-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .inline-form .full { grid-column: 1 / -1; }
+
+  .inline-form input,
+  .inline-form select,
+  .inline-form textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 11px 13px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .inline-form textarea { resize: vertical; min-height: 80px; }
+
+  .inline-form input:focus,
+  .inline-form select:focus,
+  .inline-form textarea:focus { border-color: var(--accent); }
+
+  .inline-form select option { background: var(--surface2); }
+
+  .btn-sm {
+    padding: 10px 18px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none; border-radius: 9px;
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: opacity 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-sm:hover { opacity: 0.85; }
+
+  .btn-outline {
+    padding: 10px 18px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Toast */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px;
+    padding: 13px 20px;
+    border-radius: 10px;
+    font-size: 14px; font-weight: 500;
+    z-index: 999;
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+    max-width: 320px;
+  }
+
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.success { background: rgba(34,211,160,0.15); border: 1px solid rgba(34,211,160,0.3); color: var(--green); }
+  #toast.error   { background: rgba(247,92,92,0.15);  border: 1px solid rgba(247,92,92,0.3);  color: var(--red); }
+  #toast.info    { background: rgba(79,142,247,0.15); border: 1px solid rgba(79,142,247,0.3); color: var(--accent); }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 32px;
+    width: 480px; max-width: 90vw;
+    max-height: 80vh; overflow-y: auto;
+    transform: scale(0.95);
+    transition: transform 0.2s;
+  }
+
+  .modal-overlay.open .modal { transform: scale(1); }
+
+  .modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px; font-weight: 700;
+  }
+
+  .modal-close {
+    background: var(--surface); border: none;
+    color: var(--muted);
+    width: 30px; height: 30px;
+    border-radius: 50%; cursor: pointer;
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: color 0.2s;
+  }
+  .modal-close:hover { color: var(--text); }
+
+  .thread-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+
+  .thread-title { font-weight: 600; font-size: 14px; margin-bottom: 5px; }
+  .thread-body  { color: var(--muted); font-size: 13px; line-height: 1.5; }
+  .thread-meta  { font-size: 11px; color: var(--muted); margin-top: 8px; }
+
+  .empty-state {
+    text-align: center; padding: 48px 20px; color: var(--muted);
+  }
+  .empty-state .icon { font-size: 36px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  .search-bar {
+    display: flex; gap: 10px; margin-bottom: 20px;
+  }
+
+  .search-bar input {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 16px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-bar input:focus { border-color: var(--accent); }
+
+  .loading {
+    display: flex; align-items: center;
+    justify-content: center; padding: 40px;
+    color: var(--muted); gap: 10px;
+  }
+
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .section-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 12px; overflow: hidden;
+  }
+
+  .section-header {
+    padding: 13px 16px;
+    font-weight: 600; font-size: 14px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .item-row {
+    padding: 11px 16px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid rgba(30,45,69,0.4);
+    font-size: 13px;
+  }
+  .item-row:last-child { border-bottom: none; }
+
+  .type-badge {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 2px 7px; border-radius: 4px;
+  }
+  .type-badge.link  { background: rgba(79,142,247,0.15); color: var(--accent); }
+  .type-badge.file  { background: rgba(34,211,160,0.15); color: var(--green); }
+  .type-badge.slide { background: rgba(247,201,72,0.15); color: var(--yellow); }
+
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════ AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-bg"></div>
+  <div class="auth-grid"></div>
+  <div class="auth-card">
+    <div class="auth-logo">Course<span>Flow</span></div>
+    <div class="auth-sub">COMP3161 · Course Management System</div>
+
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+      <button class="tab-btn" onclick="switchTab('register')">Register</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="tab-login">
+      <div class="form-group">
+        <label>Username</label>
+        <input id="l-username" type="text" placeholder="Enter username" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input id="l-password" type="password" placeholder="Enter password" />
+      </div>
+      <button class="btn-primary" onclick="doLogin()">Sign In</button>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="tab-register" style="display:none">
+      <div class="form-group">
+        <label>Username</label>
+        <input id="r-username" type="text" placeholder="Choose a username" />
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input id="r-email" type="email" placeholder="your@email.com" />
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label>First Name</label>
+          <input id="r-fname" type="text" placeholder="First" />
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input id="r-lname" type="text" placeholder="Last" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input id="r-password" type="password" placeholder="Create password" />
+      </div>
+      <div class="form-group">
+        <label>Role</label>
+        <select id="r-role">
+          <option value="student">Student</option>
+          <option value="lecturer">Lecturer</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <button class="btn-primary" onclick="doRegister()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ MAIN APP -->
+<div id="app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">Course<span>Flow</span></div>
+    <div class="sidebar-user">
+      <div class="avatar" id="sb-avatar">?</div>
+      <div class="user-info">
+        <div class="name" id="sb-name">—</div>
+        <div class="role" id="sb-role">—</div>
+      </div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section">Main</div>
+      <div class="nav-item active" onclick="showPage('dashboard')">
+        <span class="icon">⬡</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="showPage('courses')">
+        <span class="icon">📚</span> Courses
+      </div>
+      <div class="nav-item" onclick="showPage('my-courses')">
+        <span class="icon">🎓</span> My Courses
+      </div>
+
+      <div class="nav-section">Community</div>
+      <div class="nav-item" onclick="showPage('forums')">
+        <span class="icon">💬</span> Forums
+      </div>
+      <div class="nav-item" onclick="showPage('events')">
+        <span class="icon">📅</span> Events
+      </div>
+
+      <div class="nav-section" id="admin-section" style="display:none">Admin</div>
+      <div class="nav-item" id="nav-create-course" style="display:none" onclick="showPage('create-course')">
+        <span class="icon">➕</span> Create Course
+      </div>
+      <div class="nav-item" id="nav-reports" style="display:none" onclick="showPage('reports')">
+        <span class="icon">📊</span> Reports
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="logout()">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div>
+          <div class="page-title" id="dash-greeting">Welcome back</div>
+          <div class="page-sub">Here's what's happening today</div>
+        </div>
+      </div>
+      <div class="stats-row" id="dash-stats">
+        <div class="stat-card"><div class="stat-label">My Courses</div><div class="stat-value blue" id="stat-courses">—</div></div>
+        <div class="stat-card"><div class="stat-label">Total Courses</div><div class="stat-value purple" id="stat-total">—</div></div>
+        <div class="stat-card"><div class="stat-label">Upcoming Events</div><div class="stat-value green" id="stat-events">—</div></div>
+        <div class="stat-card"><div class="stat-label">Active Forums</div><div class="stat-value yellow" id="stat-forums">—</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">📚 Recently Enrolled Courses</div>
+        <div id="dash-courses-list"><div class="loading"><div class="spinner"></div> Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- ALL COURSES -->
+    <div class="page" id="page-courses">
+      <div class="page-header">
+        <div>
+          <div class="page-title">All Courses</div>
+          <div class="page-sub">Browse all available courses</div>
+        </div>
+      </div>
+      <div class="search-bar">
+        <input id="course-search" type="text" placeholder="Search by course code or name…" oninput="filterCourses()" />
+      </div>
+      <div class="cards-grid" id="all-courses-grid">
+        <div class="loading"><div class="spinner"></div> Loading…</div>
+      </div>
+    </div>
+
+    <!-- MY COURSES -->
+    <div class="page" id="page-my-courses">
+      <div class="page-header">
+        <div>
+          <div class="page-title">My Courses</div>
+          <div class="page-sub" id="my-courses-sub">Your enrolled courses</div>
+        </div>
+      </div>
+      <div class="cards-grid" id="my-courses-grid">
+        <div class="loading"><div class="spinner"></div> Loading…</div>
+      </div>
+    </div>
+
+    <!-- FORUMS -->
+    <div class="page" id="page-forums">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Forums</div>
+          <div class="page-sub">Pick a course to view its forum</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Select Course</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <select id="forum-course-select" style="flex:1;min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:10px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;">
+            <option value="">— Select a course —</option>
+          </select>
+          <button class="btn-sm" onclick="loadForums()">Load Forums</button>
+        </div>
+      </div>
+      <div id="forums-list"></div>
+    </div>
+
+    <!-- EVENTS -->
+    <div class="page" id="page-events">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Calendar Events</div>
+          <div class="page-sub">View events for your courses</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <select id="event-course-select" style="flex:1;min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:10px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;">
+            <option value="">— Select a course —</option>
+          </select>
+          <input type="date" id="event-date-filter" style="background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:10px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;" />
+          <button class="btn-sm" onclick="loadEvents()">Load Events</button>
+        </div>
+      </div>
+      <div id="events-list"></div>
+    </div>
+
+    <!-- CREATE COURSE (admin) -->
+    <div class="page" id="page-create-course">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Create Course</div>
+          <div class="page-sub">Add a new course to the system</div>
+        </div>
+      </div>
+      <div class="panel" style="max-width:560px">
+        <div class="panel-title">➕ New Course</div>
+        <div class="inline-form">
+          <div class="form-group">
+            <label>Course Code</label>
+            <input id="cc-code" type="text" placeholder="e.g. CRS101" />
+          </div>
+          <div class="form-group">
+            <label>Course Name</label>
+            <input id="cc-name" type="text" placeholder="e.g. Introduction to CS" />
+          </div>
+          <div class="form-group full">
+            <label>Description</label>
+            <textarea id="cc-desc" placeholder="Course description…"></textarea>
+          </div>
+        </div>
+        <button class="btn-sm" onclick="createCourse()" style="margin-top:8px">Create Course</button>
+      </div>
+
+      <div class="panel" style="max-width:560px">
+        <div class="panel-title">👤 Assign Lecturer</div>
+        <div class="inline-form">
+          <div class="form-group">
+            <label>Course ID</label>
+            <input id="al-course" type="number" placeholder="Course ID" />
+          </div>
+          <div class="form-group">
+            <label>Lecturer User ID</label>
+            <input id="al-lecturer" type="number" placeholder="Lecturer userID" />
+          </div>
+        </div>
+        <button class="btn-sm" onclick="assignLecturer()" style="margin-top:8px">Assign Lecturer</button>
+      </div>
+    </div>
+
+    <!-- REPORTS (admin) -->
+    <div class="page" id="page-reports">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Reports</div>
+          <div class="page-sub">System analytics and statistics</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px">
+        <button class="btn-sm"    onclick="loadReport('courses-50-plus', 'rpt-table')">Courses 50+ Students</button>
+        <button class="btn-outline" onclick="loadReport('students-5-plus-courses', 'rpt-table')">Students 5+ Courses</button>
+        <button class="btn-outline" onclick="loadReport('lecturers-3-plus-courses', 'rpt-table')">Lecturers 3+ Courses</button>
+        <button class="btn-outline" onclick="loadReport('top-10-enrolled', 'rpt-table')">Top 10 Enrolled</button>
+        <button class="btn-outline" onclick="loadReport('top-10-students', 'rpt-table')">Top 10 Students</button>
+      </div>
+      <div id="rpt-table"></div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ══ COURSE DETAIL MODAL -->
+<div class="modal-overlay" id="course-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="cm-title">Course</div>
+      <button class="modal-close" onclick="closeModal('course-modal')">✕</button>
+    </div>
+    <div id="cm-body"></div>
+  </div>
+</div>
+
+<!-- ══ THREAD MODAL -->
+<div class="modal-overlay" id="thread-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Forum Threads</div>
+      <button class="modal-close" onclick="closeModal('thread-modal')">✕</button>
+    </div>
+    <div id="tm-body"></div>
+    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px">
+      <div class="panel-title" style="margin-bottom:10px;font-size:14px">Post New Thread</div>
+      <input id="new-thread-title" type="text" placeholder="Thread title…" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:10px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:10px;" />
+      <textarea id="new-thread-body" placeholder="Thread content…" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:10px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;min-height:80px;resize:vertical;margin-bottom:10px;"></textarea>
+      <button class="btn-sm" onclick="postThread()">Post Thread</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOAST -->
+<div id="toast"></div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────
+const BASE = 'http://127.0.0.1:5000';
+
+// ── STATE ───────────────────────────────────────────────────
+let token = null;
+let currentUser = { username: '', role: '', userID: null };
+let allCourses = [];
+let activeForum = null;
+
+// ── UTILS ───────────────────────────────────────────────────
+function toast(msg, type = 'info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `show ${type}`;
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+async function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(BASE + path, { headers, ...opts });
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok, status: res.status, data };
+}
+
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── AUTH ────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById('tab-login').style.display    = tab === 'login'    ? '' : 'none';
+  document.getElementById('tab-register').style.display = tab === 'register' ? '' : 'none';
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+  });
+}
+
+async function doLogin() {
+  const username = document.getElementById('l-username').value.trim();
+  const password = document.getElementById('l-password').value;
+  if (!username || !password) return toast('Please fill in all fields', 'error');
+
+  const r = await api('/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+  if (!r.ok) return toast(r.data.error || 'Login failed', 'error');
+
+  token = r.data.access_token;
+  // Decode role from JWT payload (base64)
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    currentUser.role = payload.role;
+    currentUser.username = payload.sub;
+  } catch(e) { currentUser.role = 'student'; }
+
+  toast('Welcome back, ' + username + '!', 'success');
+  showApp();
+}
+
+async function doRegister() {
+  const body = {
+    username: document.getElementById('r-username').value.trim(),
+    email:    document.getElementById('r-email').value.trim(),
+    fname:    document.getElementById('r-fname').value.trim(),
+    lname:    document.getElementById('r-lname').value.trim(),
+    password: document.getElementById('r-password').value,
+    role:     document.getElementById('r-role').value,
+  };
+  if (!body.username || !body.email || !body.fname || !body.lname || !body.password)
+    return toast('Please fill in all fields', 'error');
+
+  const r = await api('/register', { method: 'POST', body: JSON.stringify(body) });
+  if (!r.ok) return toast(r.data.message || 'Registration failed', 'error');
+
+  toast('Account created! Please log in.', 'success');
+  switchTab('login');
+}
+
+function showApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  document.getElementById('sb-name').textContent  = currentUser.username;
+  document.getElementById('sb-role').textContent  = currentUser.role;
+  document.getElementById('sb-avatar').textContent = currentUser.username[0].toUpperCase();
+
+  // Show admin nav items
+  if (currentUser.role === 'admin') {
+    document.getElementById('admin-section').style.display    = '';
+    document.getElementById('nav-create-course').style.display = '';
+    document.getElementById('nav-reports').style.display       = '';
+  }
+
+  loadDashboard();
+  loadAllCourses();
+}
+
+function logout() {
+  token = null; currentUser = {};
+  document.getElementById('auth-screen').style.display = '';
+  document.getElementById('app').style.display = 'none';
+  toast('Signed out', 'info');
+}
+
+// ── NAVIGATION ───────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (id === 'my-courses')   loadMyCourses();
+  if (id === 'forums')       populateCourseSelects();
+  if (id === 'events')       populateCourseSelects();
+}
+
+// ── DASHBOARD ────────────────────────────────────────────────
+async function loadDashboard() {
+  document.getElementById('dash-greeting').textContent = 'Welcome back, ' + currentUser.username;
+
+  // Total courses
+  const rc = await api('/courses');
+  allCourses = rc.ok ? rc.data : [];
+  document.getElementById('stat-total').textContent = allCourses.length;
+
+  // My courses - need to use userID, try to get from first enroll or just show all for now
+  document.getElementById('stat-courses').textContent = '—';
+  document.getElementById('stat-events').textContent  = '—';
+  document.getElementById('stat-forums').textContent  = allCourses.length;
+
+  // Recent courses on dashboard
+  const grid = document.getElementById('dash-courses-list');
+  if (!allCourses.length) {
+    grid.innerHTML = '<div class="empty-state"><div class="icon">📚</div><p>No courses available</p></div>';
+    return;
+  }
+  grid.innerHTML = `<div class="cards-grid">${allCourses.slice(0,6).map(c => courseCardHTML(c, true)).join('')}</div>`;
+}
+
+// ── COURSES ──────────────────────────────────────────────────
+async function loadAllCourses() {
+  const r = await api('/courses');
+  allCourses = r.ok ? r.data : [];
+  renderCourseGrid('all-courses-grid', allCourses);
+  populateCourseSelects();
+}
+
+function renderCourseGrid(containerId, courses) {
+  const el = document.getElementById(containerId);
+  if (!courses.length) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">📚</div><p>No courses found</p></div>';
+    return;
+  }
+  el.innerHTML = courses.map(c => courseCardHTML(c)).join('');
+}
+
+function courseCardHTML(c, small = false) {
+  return `<div class="course-card" onclick="viewCourse(${c.courseID}, '${(c.ccode||'').replace(/'/g,"\\'")}', '${(c.cname||'').replace(/'/g,"\\'")}')">
+    <div class="course-code">${c.ccode || ''}</div>
+    <div class="course-name">${c.cname || ''}</div>
+    <div class="course-desc">${c.description || 'No description available.'}</div>
+  </div>`;
+}
+
+function filterCourses() {
+  const q = document.getElementById('course-search').value.toLowerCase();
+  const filtered = allCourses.filter(c =>
+    (c.ccode || '').toLowerCase().includes(q) ||
+    (c.cname || '').toLowerCase().includes(q)
+  );
+  renderCourseGrid('all-courses-grid', filtered);
+}
+
+async function loadMyCourses() {
+  // Try to find user's ID — for now, use lecturer endpoint if lecturer, else show message
+  const el = document.getElementById('my-courses-grid');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div> Loading…</div>';
+
+  if (currentUser.role === 'lecturer') {
+    document.getElementById('my-courses-sub').textContent = 'Courses you teach';
+    // We'd need the lecturerID — for demo, show all courses
+    el.innerHTML = '<div class="empty-state"><div class="icon">🔑</div><p>Enter your User ID in the search bar to load your courses</p></div>';
+  } else {
+    document.getElementById('my-courses-sub').textContent = 'Your enrolled courses';
+    el.innerHTML = '<div class="empty-state"><div class="icon">📌</div><p>Click any course on the Courses page and enroll to see them here</p></div>';
+  }
+}
+
+// ── COURSE DETAIL MODAL ──────────────────────────────────────
+async function viewCourse(courseID, ccode, cname) {
+  document.getElementById('cm-title').textContent = `${ccode} — ${cname}`;
+  document.getElementById('cm-body').innerHTML = '<div class="loading"><div class="spinner"></div> Loading…</div>';
+  openModal('course-modal');
+
+  // Load members and content in parallel
+  const [members, content, forums] = await Promise.all([
+    api(`/courses/${courseID}/members`),
+    api(`/courses/${courseID}/content`),
+    api(`/courses/${courseID}/forums`),
+  ]);
+
+  const mList = members.ok ? members.data : [];
+  const cList = content.ok ? content.data : [];
+  const fList = forums.ok  ? forums.data  : [];
+
+  let html = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+      <div class="stat-card"><div class="stat-label">Members</div><div class="stat-value blue" style="font-size:22px">${mList.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Sections</div><div class="stat-value purple" style="font-size:22px">${cList.length}</div></div>
+    </div>`;
+
+  // Enroll button (students only)
+  if (currentUser.role === 'student') {
+    html += `<button class="btn-sm" onclick="enrollInCourse(${courseID})" style="margin-bottom:16px;width:100%">Enroll in this Course</button>`;
+  }
+
+  // Content sections
+  if (cList.length) {
+    html += `<div style="margin-bottom:16px"><div class="panel-title" style="font-size:14px;margin-bottom:10px">📁 Course Content</div>`;
+    cList.forEach(s => {
+      html += `<div class="section-block">
+        <div class="section-header">📂 ${s.title}</div>`;
+      (s.items || []).forEach(i => {
+        html += `<div class="item-row">
+          <span class="type-badge ${i.type}">${i.type}</span>
+          <span style="flex:1">${i.title}</span>
+          ${i.url ? `<a href="${i.url}" target="_blank" style="color:var(--accent);font-size:12px">Open ↗</a>` : ''}
+        </div>`;
+      });
+      html += `</div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Forums button
+  if (fList.length) {
+    html += `<div><div class="panel-title" style="font-size:14px;margin-bottom:10px">💬 Forums</div>`;
+    fList.forEach(f => {
+      html += `<div class="thread-item" style="cursor:pointer" onclick="openForum(${f.forumID}, '${(f.title||'').replace(/'/g,"\\'")}')">
+        <div class="thread-title">${f.title}</div>
+        <div class="thread-meta">Created ${new Date(f.created_at).toLocaleDateString()}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Members preview
+  if (mList.length) {
+    html += `<div style="margin-top:16px"><div class="panel-title" style="font-size:14px;margin-bottom:10px">👥 Members (${mList.length})</div>
+    <div class="table-wrap"><table><thead><tr><th>Username</th><th>Name</th><th>Role</th></tr></thead><tbody>
+    ${mList.slice(0,10).map(m => `<tr><td>${m.username}</td><td>${m.fname} ${m.lname}</td><td><span class="badge ${m.role}">${m.role}</span></td></tr>`).join('')}
+    ${mList.length > 10 ? `<tr><td colspan="3" style="color:var(--muted);font-size:12px">...and ${mList.length-10} more</td></tr>` : ''}
+    </tbody></table></div></div>`;
+  }
+
+  document.getElementById('cm-body').innerHTML = html;
+}
+
+async function enrollInCourse(courseID) {
+  const studID = prompt('Enter your Student User ID:');
+  if (!studID) return;
+  const r = await api(`/courses/${courseID}/enroll`, { method: 'POST', body: JSON.stringify({ studID: parseInt(studID) }) });
+  toast(r.data.message || (r.ok ? 'Enrolled!' : 'Error enrolling'), r.ok ? 'success' : 'error');
+}
+
+// ── FORUMS & THREADS ─────────────────────────────────────────
+async function loadForums() {
+  const courseID = document.getElementById('forum-course-select').value;
+  if (!courseID) return toast('Please select a course', 'error');
+
+  const el = document.getElementById('forums-list');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div> Loading…</div>';
+
+  const r = await api(`/courses/${courseID}/forums`);
+  if (!r.ok || !r.data.length) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">💬</div><p>No forums for this course</p></div>';
+    return;
+  }
+
+  el.innerHTML = r.data.map(f => `
+    <div class="panel" style="cursor:pointer" onclick="openForum(${f.forumID}, '${(f.title||'').replace(/'/g,"\\'")}')">
+      <div class="panel-title">💬 ${f.title}</div>
+      <div style="color:var(--muted);font-size:13px">Click to view threads →</div>
+    </div>`).join('');
+}
+
+async function openForum(forumID, title) {
+  activeForum = forumID;
+  document.getElementById('tm-body').innerHTML = '<div class="loading"><div class="spinner"></div> Loading…</div>';
+  openModal('thread-modal');
+
+  const r = await api(`/forums/${forumID}/threads`);
+  const threads = r.ok ? r.data : [];
+
+  document.getElementById('tm-body').innerHTML = threads.length
+    ? threads.map(t => `
+      <div class="thread-item">
+        <div class="thread-title">${t.title}</div>
+        <div class="thread-body">${t.body}</div>
+        <div class="thread-meta">${new Date(t.created_at).toLocaleDateString()}</div>
+      </div>`).join('')
+    : '<div class="empty-state"><div class="icon">💬</div><p>No threads yet — be the first!</p></div>';
+}
+
+async function postThread() {
+  const title = document.getElementById('new-thread-title').value.trim();
+  const body  = document.getElementById('new-thread-body').value.trim();
+  if (!title || !body) return toast('Please fill in both fields', 'error');
+  if (!activeForum) return toast('No forum selected', 'error');
+
+  const r = await api(`/forums/${activeForum}/threads`, { method: 'POST', body: JSON.stringify({ title, body }) });
+  if (!r.ok) return toast(r.data.message || 'Failed to post', 'error');
+
+  toast('Thread posted!', 'success');
+  document.getElementById('new-thread-title').value = '';
+  document.getElementById('new-thread-body').value  = '';
+  openForum(activeForum, '');
+}
+
+// ── EVENTS ───────────────────────────────────────────────────
+async function loadEvents() {
+  const courseID = document.getElementById('event-course-select').value;
+  const date     = document.getElementById('event-date-filter').value;
+  if (!courseID) return toast('Please select a course', 'error');
+
+  const el = document.getElementById('events-list');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div> Loading…</div>';
+
+  const r = await api(`/courses/${courseID}/events`);
+  let events = r.ok ? r.data : [];
+
+  if (date) events = events.filter(e => e.event_date === date);
+
+  if (!events.length) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>No events found</p></div>';
+    return;
+  }
+
+  el.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Event</th><th>Date</th><th>Time</th><th>Description</th></tr></thead>
+    <tbody>${events.map(e => `
+      <tr>
+        <td><strong>${e.title}</strong></td>
+        <td>${e.event_date}</td>
+        <td>${e.start_time || '—'} ${e.end_time ? '→ ' + e.end_time : ''}</td>
+        <td style="color:var(--muted)">${e.description || '—'}</td>
+      </tr>`).join('')}
+    </tbody></table></div>`;
+}
+
+// ── CREATE COURSE (admin) ────────────────────────────────────
+async function createCourse() {
+  const body = {
+    ccode:       document.getElementById('cc-code').value.trim(),
+    cname:       document.getElementById('cc-name').value.trim(),
+    description: document.getElementById('cc-desc').value.trim(),
+  };
+  if (!body.ccode || !body.cname) return toast('Course code and name are required', 'error');
+
+  const r = await api('/courses', { method: 'POST', body: JSON.stringify(body) });
+  toast(r.data.message || (r.ok ? 'Course created!' : 'Failed'), r.ok ? 'success' : 'error');
+  if (r.ok) { document.getElementById('cc-code').value = document.getElementById('cc-name').value = document.getElementById('cc-desc').value = ''; loadAllCourses(); }
+}
+
+async function assignLecturer() {
+  const courseID   = document.getElementById('al-course').value;
+  const lecturerID = document.getElementById('al-lecturer').value;
+  if (!courseID || !lecturerID) return toast('Both fields required', 'error');
+
+  const r = await api(`/courses/${courseID}/assign-lecturer`, { method: 'POST', body: JSON.stringify({ lecturerID: parseInt(lecturerID) }) });
+  toast(r.data.message || (r.ok ? 'Assigned!' : 'Failed'), r.ok ? 'success' : 'error');
+}
+
+// ── REPORTS (admin) ──────────────────────────────────────────
+async function loadReport(endpoint, containerId) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '<div class="loading"><div class="spinner"></div> Loading…</div>';
+
+  const r = await api(`/reports/${endpoint}`);
+  if (!r.ok || !r.data.length) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">📊</div><p>No data available</p></div>';
+    return;
+  }
+
+  const keys = Object.keys(r.data[0]);
+  el.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr>${keys.map(k => `<th>${k}</th>`).join('')}</tr></thead>
+    <tbody>${r.data.map(row => `<tr>${keys.map(k => `<td>${row[k]}</td>`).join('')}</tr>`).join('')}
+    </tbody></table></div>`;
+}
+
+// ── POPULATE SELECTS ─────────────────────────────────────────
+function populateCourseSelects() {
+  ['forum-course-select', 'event-course-select'].forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = '<option value="">— Select a course —</option>';
+    allCourses.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.courseID; o.textContent = `${c.ccode} — ${c.cname}`;
+      el.appendChild(o);
+    });
+  });
+}
+</script>
+</body>
+</html>
