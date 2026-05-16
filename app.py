@@ -9,6 +9,8 @@ from functools import wraps
 from dotenv import load_dotenv
 from datetime import timedelta
 import os
+import redis
+import json
 
 load_dotenv()
 
@@ -21,6 +23,17 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=7)
 jwt = JWTManager(app)
 
 _pool = None
+
+def get_redis():
+    url = os.getenv('REDIS_URL')
+    if not url:
+        return None
+    try:
+        return redis.from_url(url, decode_responses=True)
+    except Exception:
+        return None
+
+cache = get_redis()
 
 def get_db_connection():
     global _pool
@@ -181,6 +194,8 @@ def create_course():
                     VALUES (%s, %s, %s, %s, %s)""",
                     (ccode, cname, desc, created_by, lecturerID))
                 cnx.commit()
+        if cache:
+            cache.delete('all_courses')
         return jsonify({"message": "Course created successfully"}), 201
     except Exception as e:
         return jsonify({"message": str(e)}), 400
@@ -211,6 +226,10 @@ def get_course(courseID):
 @app.route('/courses', methods=['GET'])
 def get_courses():
     try:
+        if cache:
+            cached = cache.get('all_courses')
+            if cached:
+                return jsonify(json.loads(cached)), 200
         with get_db_connection() as cnx:
             with cnx.cursor() as cursor:
                 cursor.execute("""
@@ -222,6 +241,8 @@ def get_courses():
                 rows = cursor.fetchall()
                 courses = [{"courseID": r[0], "ccode": r[1], "cname": r[2], "description": r[3],
                             "fname": r[4], "lname": r[5], "lecturerID": r[6]} for r in rows]
+        if cache:
+            cache.setex('all_courses', 300, json.dumps(courses))
         return jsonify(courses), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 400
@@ -230,6 +251,11 @@ def get_courses():
 @app.route('/courses/student/<int:studID>', methods=['GET'])
 def get_course_by_student(studID):
     try:
+        key = f'student_courses_{studID}'
+        if cache:
+            cached = cache.get(key)
+            if cached:
+                return jsonify(json.loads(cached)), 200
         with get_db_connection() as cnx:
             with cnx.cursor() as cursor:
                 cursor.execute("""
@@ -238,6 +264,8 @@ def get_course_by_student(studID):
                     WHERE e.studID = %s""", (studID,))
                 rows = cursor.fetchall()
                 courses = [{"courseID": r[0], "ccode": r[1], "cname": r[2], "description": r[3]} for r in rows]
+        if cache:
+            cache.setex(key, 300, json.dumps(courses))
         return jsonify(courses), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 400
@@ -906,11 +934,17 @@ def get_lecturers_report():
 @app.route('/reports/top-10-enrolled', methods=['GET'])
 def get_top_enrolled():
     try:
+        if cache:
+            cached = cache.get('top_10_enrolled')
+            if cached:
+                return jsonify(json.loads(cached)), 200
         with get_db_connection() as cnx:
             with cnx.cursor() as cursor:
                 cursor.execute("SELECT * FROM vw_top_10_enrolled_courses")
                 rows = cursor.fetchall()
                 courses = [{"courseID": r[0], "ccode": r[1], "cname": r[2], "student_count": r[3]} for r in rows]
+        if cache:
+            cache.setex('top_10_enrolled', 300, json.dumps(courses))
         return jsonify(courses), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 400
@@ -920,11 +954,17 @@ def get_top_enrolled():
 @role_required('lecturer', 'admin')
 def get_top_students():
     try:
+        if cache:
+            cached = cache.get('top_10_students')
+            if cached:
+                return jsonify(json.loads(cached)), 200
         with get_db_connection() as cnx:
             with cnx.cursor() as cursor:
                 cursor.execute("SELECT * FROM vw_top_10_students_avg")
                 rows = cursor.fetchall()
-                students = [{"userID": r[0], "username": r[1], "fname": r[2], "lname": r[3], "overall_average": r[4]} for r in rows]
+                students = [{"userID": r[0], "username": r[1], "fname": r[2], "lname": r[3], "overall_average": float(r[4]) if r[4] else None} for r in rows]
+        if cache:
+            cache.setex('top_10_students', 300, json.dumps(students))
         return jsonify(students), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 400
