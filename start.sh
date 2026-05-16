@@ -1,6 +1,6 @@
 #!/bin/sh
 
-MYSQL_CMD="mysql -h $DB_HOST -P ${DB_PORT:-3306} -u $DB_USER -p$DB_PASSWORD $DB_NAME --ssl-mode=DISABLED"
+MYSQL_CMD="mysql -h $DB_HOST -P ${DB_PORT:-3306} -u $DB_USER -p$DB_PASSWORD $DB_NAME --ssl=FALSE"
 
 echo "Starting gunicorn..."
 gunicorn --bind "0.0.0.0:${PORT:-5000}" --workers 4 app:app &
