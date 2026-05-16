@@ -62,7 +62,11 @@ def get_users():
     try:
         with get_db_connection() as cnx:
             with cnx.cursor() as cursor:
-                cursor.execute("SELECT userID, username, email, fname, lname, role FROM users")
+                role = request.args.get('role')
+                if role:
+                    cursor.execute("SELECT userID, username, email, fname, lname, role FROM users WHERE role = %s LIMIT 500", (role,))
+                else:
+                    cursor.execute("SELECT userID, username, email, fname, lname, role FROM users LIMIT 500")
                 rows = cursor.fetchall()
                 users = [{"userID": r[0], "username": r[1], "email": r[2], "fname": r[3], "lname": r[4], "role": r[5]} for r in rows]
         return jsonify(users), 200
@@ -246,9 +250,12 @@ def get_course_by_lecturer(lecturerID):
             with cnx.cursor() as cursor:
                 cursor.execute("""
                     SELECT c.courseID, c.ccode, c.cname, c.description, u.fname, u.lname,
-                           (SELECT COUNT(*) FROM enrollments e WHERE e.courseID = c.courseID) AS student_count
-                    FROM courses c JOIN users u ON c.lecturerID = u.userID
-                    WHERE c.lecturerID = %s""", (lecturerID,))
+                           COUNT(e.studID) AS student_count
+                    FROM courses c
+                    JOIN users u ON c.lecturerID = u.userID
+                    LEFT JOIN enrollments e ON c.courseID = e.courseID
+                    WHERE c.lecturerID = %s
+                    GROUP BY c.courseID, c.ccode, c.cname, c.description, u.fname, u.lname""", (lecturerID,))
                 rows = cursor.fetchall()
                 courses = [{"courseID": r[0], "ccode": r[1], "cname": r[2], "description": r[3],
                             "fname": r[4], "lname": r[5], "student_count": r[6]} for r in rows]
@@ -590,24 +597,16 @@ def get_content_by_section(courseID):
                     WHERE s.courseID = %s
                     ORDER BY s.position, i.itemID""", (courseID,))
                 rows = cursor.fetchall()
- 
+
                 sections = {}
-                seen_sections = {}  # (title, position) -> sectionID
-                seen_items = set()  # (sectionID_canonical, title) to dedup items
                 for r in rows:
                     sid = r[0]
-                    key = (r[1], r[2])  # (title, position)
-                    if key not in seen_sections:
-                        seen_sections[key] = sid
+                    if sid not in sections:
                         sections[sid] = {"sectionID": sid, "title": r[1], "position": r[2], "items": []}
-                    canonical_sid = seen_sections[key]
                     if r[3]:
-                        item_key = (canonical_sid, r[5])  # dedup by section+title
-                        if item_key not in seen_items:
-                            seen_items.add(item_key)
-                            sections[canonical_sid]["items"].append({
-                                "itemID": r[3], "type": r[4], "title": r[5], "url": r[6], "filepath": r[7]
-                            })
+                        sections[sid]["items"].append({
+                            "itemID": r[3], "type": r[4], "title": r[5], "url": r[6], "filepath": r[7]
+                        })
 
         result = sorted(sections.values(), key=lambda s: s['position'])
         return jsonify(result), 200
@@ -944,31 +943,31 @@ def get_student_grades(studID):
                 cursor.execute("""
                     SELECT c.courseID, c.ccode, c.cname,
                            a.assignmentID, a.title, a.maxgrade,
-                           s.grade, s.submitted_at, s.graded_at
+                           s.grade, s.submitted_at, s.graded_at,
+                           ROUND(AVG(s.grade / a.maxgrade * 100) OVER (PARTITION BY c.courseID), 2) AS course_avg,
+                           ROUND(AVG(s.grade / a.maxgrade * 100) OVER (), 2) AS overall_avg
                     FROM submissions s
                     JOIN assignments a ON s.assignmentID = a.assignmentID
                     JOIN courses c ON a.courseID = c.courseID
                     WHERE s.studID = %s AND s.grade IS NOT NULL
                     ORDER BY c.ccode, a.title""", (studID,))
                 rows = cursor.fetchall()
+
         courses = {}
+        overall_average = None
         for r in rows:
             cid = r[0]
+            overall_average = float(r[10]) if r[10] is not None else None
             if cid not in courses:
-                courses[cid] = {"courseID": cid, "ccode": r[1], "cname": r[2], "grades": []}
+                courses[cid] = {"courseID": cid, "ccode": r[1], "cname": r[2],
+                                "course_average": float(r[9]) if r[9] is not None else None,
+                                "grades": []}
             courses[cid]["grades"].append({
                 "assignmentID": r[3], "title": r[4], "maxgrade": float(r[5]),
                 "grade": float(r[6]), "submitted_at": str(r[7]) if r[7] else None,
                 "graded_at": str(r[8]) if r[8] else None
             })
-        result = list(courses.values())
-        for c in result:
-            grades = [g["grade"] for g in c["grades"]]
-            maxgrades = [g["maxgrade"] for g in c["grades"]]
-            c["course_average"] = round(sum(g/m*100 for g, m in zip(grades, maxgrades)) / len(grades), 2) if grades else None
-        all_avgs = [c["course_average"] for c in result if c["course_average"] is not None]
-        overall_average = round(sum(all_avgs) / len(all_avgs), 2) if all_avgs else None
-        return jsonify({"courses": result, "overall_average": overall_average}), 200
+        return jsonify({"courses": list(courses.values()), "overall_average": overall_average}), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 400
 
