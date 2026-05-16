@@ -3,8 +3,6 @@
 -- Password for all accounts: password123
 -- ============================================================
 
-USE course_management;
-
 -- 0. Clear existing data (safe to re-run)
 SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE submissions;

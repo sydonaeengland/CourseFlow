@@ -1,12 +1,4 @@
--- ============================================================
--- COMP3161 Course Management System - Database Creation Script
--- ============================================================
-
-CREATE DATABASE IF NOT EXISTS course_management;
-USE course_management;
-
--- Users Table
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     userID     INT AUTO_INCREMENT PRIMARY KEY,
     username   VARCHAR(50)  NOT NULL UNIQUE,
     password   VARCHAR(255) NOT NULL,
@@ -17,8 +9,7 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Courses Table
-CREATE TABLE courses (
+CREATE TABLE IF NOT EXISTS courses (
     courseID    INT AUTO_INCREMENT PRIMARY KEY,
     ccode       VARCHAR(20)  NOT NULL UNIQUE,
     cname       VARCHAR(100) NOT NULL,
@@ -30,8 +21,7 @@ CREATE TABLE courses (
     FOREIGN KEY (lecturerID) REFERENCES users(userID)
 );
 
--- Course Enrollment (Students)
-CREATE TABLE enrollments (
+CREATE TABLE IF NOT EXISTS enrollments (
     enrollmentID INT AUTO_INCREMENT PRIMARY KEY,
     courseID     INT NOT NULL,
     studID       INT NOT NULL,
@@ -41,8 +31,7 @@ CREATE TABLE enrollments (
     FOREIGN KEY (studID)   REFERENCES users(userID)
 );
 
--- Calendar Events
-CREATE TABLE calendar_events (
+CREATE TABLE IF NOT EXISTS calendar_events (
     eventID     INT AUTO_INCREMENT PRIMARY KEY,
     courseID    INT NOT NULL,
     title       VARCHAR(150) NOT NULL,
@@ -56,8 +45,7 @@ CREATE TABLE calendar_events (
     FOREIGN KEY (created_by) REFERENCES users(userID)
 );
 
--- Forums
-CREATE TABLE forums (
+CREATE TABLE IF NOT EXISTS forums (
     forumID    INT AUTO_INCREMENT PRIMARY KEY,
     courseID   INT NOT NULL,
     title      VARCHAR(150) NOT NULL,
@@ -67,8 +55,7 @@ CREATE TABLE forums (
     FOREIGN KEY (created_by) REFERENCES users(userID)
 );
 
--- Discussion Threads
-CREATE TABLE threads (
+CREATE TABLE IF NOT EXISTS threads (
     threadID   INT AUTO_INCREMENT PRIMARY KEY,
     forumID    INT NOT NULL,
     title      VARCHAR(200) NOT NULL,
@@ -79,8 +66,7 @@ CREATE TABLE threads (
     FOREIGN KEY (created_by) REFERENCES users(userID)
 );
 
--- Thread Replies (self-referencing for nested replies)
-CREATE TABLE replies (
+CREATE TABLE IF NOT EXISTS replies (
     replyID    INT AUTO_INCREMENT PRIMARY KEY,
     threadID   INT NOT NULL,
     parentID   INT DEFAULT NULL,
@@ -92,8 +78,7 @@ CREATE TABLE replies (
     FOREIGN KEY (created_by) REFERENCES users(userID)
 );
 
--- Course Content Sections
-CREATE TABLE sections (
+CREATE TABLE IF NOT EXISTS sections (
     sectionID INT AUTO_INCREMENT PRIMARY KEY,
     courseID  INT NOT NULL,
     title     VARCHAR(150) NOT NULL,
@@ -101,8 +86,7 @@ CREATE TABLE sections (
     FOREIGN KEY (courseID) REFERENCES courses(courseID)
 );
 
--- Course Content Items
-CREATE TABLE items (
+CREATE TABLE IF NOT EXISTS items (
     itemID      INT AUTO_INCREMENT PRIMARY KEY,
     sectionID   INT NOT NULL,
     type        ENUM('link','file','slide') NOT NULL,
@@ -115,8 +99,7 @@ CREATE TABLE items (
     FOREIGN KEY (uploaded_by) REFERENCES users(userID)
 );
 
--- Assignments
-CREATE TABLE assignments (
+CREATE TABLE IF NOT EXISTS assignments (
     assignmentID INT AUTO_INCREMENT PRIMARY KEY,
     courseID     INT NOT NULL,
     title        VARCHAR(150) NOT NULL,
@@ -129,8 +112,7 @@ CREATE TABLE assignments (
     FOREIGN KEY (created_by) REFERENCES users(userID)
 );
 
--- Assignment Submissions
-CREATE TABLE submissions (
+CREATE TABLE IF NOT EXISTS submissions (
     subID        INT AUTO_INCREMENT PRIMARY KEY,
     assignmentID INT NOT NULL,
     studID       INT NOT NULL,
@@ -145,65 +127,40 @@ CREATE TABLE submissions (
     FOREIGN KEY (graded_by)    REFERENCES users(userID)
 );
 
--- ============================================================
--- VIEWS
--- ============================================================
-
--- Courses with 50 or more students
-CREATE VIEW vw_courses_50_plus AS
+CREATE OR REPLACE VIEW vw_courses_50_plus AS
 SELECT c.courseID, c.ccode, c.cname, COUNT(e.studID) AS student_count
-FROM courses c
-JOIN enrollments e ON c.courseID = e.courseID
-GROUP BY c.courseID, c.ccode, c.cname
-HAVING COUNT(e.studID) >= 50;
+FROM courses c JOIN enrollments e ON c.courseID = e.courseID
+GROUP BY c.courseID, c.ccode, c.cname HAVING COUNT(e.studID) >= 50;
 
--- Students enrolled in 5 or more courses
-CREATE VIEW vw_students_5_plus_courses AS
+CREATE OR REPLACE VIEW vw_students_5_plus_courses AS
 SELECT u.userID, u.username, u.fname, u.lname, COUNT(e.courseID) AS course_count
-FROM users u
-JOIN enrollments e ON u.userID = e.studID
+FROM users u JOIN enrollments e ON u.userID = e.studID
 WHERE u.role = 'student'
-GROUP BY u.userID, u.username, u.fname, u.lname
-HAVING COUNT(e.courseID) >= 5;
+GROUP BY u.userID, u.username, u.fname, u.lname HAVING COUNT(e.courseID) >= 5;
 
--- Lecturers teaching 3 or more courses
-CREATE VIEW vw_lecturers_3_plus_courses AS
+CREATE OR REPLACE VIEW vw_lecturers_3_plus_courses AS
 SELECT u.userID, u.username, u.fname, u.lname, COUNT(c.courseID) AS course_count
-FROM users u
-JOIN courses c ON u.userID = c.lecturerID
+FROM users u JOIN courses c ON u.userID = c.lecturerID
 WHERE u.role = 'lecturer'
-GROUP BY u.userID, u.username, u.fname, u.lname
-HAVING COUNT(c.courseID) >= 3;
+GROUP BY u.userID, u.username, u.fname, u.lname HAVING COUNT(c.courseID) >= 3;
 
--- Top 10 most enrolled courses
-CREATE VIEW vw_top_10_enrolled_courses AS
+CREATE OR REPLACE VIEW vw_top_10_enrolled_courses AS
 SELECT c.courseID, c.ccode, c.cname, COUNT(e.studID) AS student_count
-FROM courses c
-JOIN enrollments e ON c.courseID = e.courseID
-GROUP BY c.courseID, c.ccode, c.cname
-ORDER BY student_count DESC
-LIMIT 10;
+FROM courses c JOIN enrollments e ON c.courseID = e.courseID
+GROUP BY c.courseID, c.ccode, c.cname ORDER BY student_count DESC LIMIT 10;
 
--- Top 10 students by overall average
-CREATE VIEW vw_top_10_students_avg AS
-SELECT u.userID, u.username, u.fname, u.lname,
-       ROUND(AVG(s.grade), 2) AS overall_average
-FROM users u
-JOIN submissions s ON u.userID = s.studID
+CREATE OR REPLACE VIEW vw_top_10_students_avg AS
+SELECT u.userID, u.username, u.fname, u.lname, ROUND(AVG(s.grade), 2) AS overall_average
+FROM users u JOIN submissions s ON u.userID = s.studID
 WHERE s.grade IS NOT NULL AND u.role = 'student'
-GROUP BY u.userID, u.username, u.fname, u.lname
-ORDER BY overall_average DESC
-LIMIT 10;
+GROUP BY u.userID, u.username, u.fname, u.lname ORDER BY overall_average DESC LIMIT 10;
 
--- ============================================================
--- INDEXES FOR OPTIMIZATION
--- ============================================================
-CREATE INDEX idx_enrollments_student ON enrollments(studID);
-CREATE INDEX idx_enrollments_course  ON enrollments(courseID);
-CREATE INDEX idx_submissions_student ON submissions(studID);
-CREATE INDEX idx_calendar_date       ON calendar_events(event_date);
-CREATE INDEX idx_threads_forum       ON threads(forumID);
-CREATE INDEX idx_replies_thread      ON replies(threadID);
-CREATE INDEX idx_replies_parent      ON replies(parentID);
-CREATE INDEX idx_content_section     ON items(sectionID);
-CREATE INDEX idx_courses_lecturer    ON courses(lecturerID);
+CREATE INDEX IF NOT EXISTS idx_enrollments_student ON enrollments(studID);
+CREATE INDEX IF NOT EXISTS idx_enrollments_course  ON enrollments(courseID);
+CREATE INDEX IF NOT EXISTS idx_submissions_student ON submissions(studID);
+CREATE INDEX IF NOT EXISTS idx_calendar_date       ON calendar_events(event_date);
+CREATE INDEX IF NOT EXISTS idx_threads_forum       ON threads(forumID);
+CREATE INDEX IF NOT EXISTS idx_replies_thread      ON replies(threadID);
+CREATE INDEX IF NOT EXISTS idx_replies_parent      ON replies(parentID);
+CREATE INDEX IF NOT EXISTS idx_content_section     ON items(sectionID);
+CREATE INDEX IF NOT EXISTS idx_courses_lecturer    ON courses(lecturerID);
