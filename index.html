@@ -628,6 +628,66 @@
   .type-badge.file  { background: rgba(34,211,160,0.15); color: var(--green); }
   .type-badge.slide { background: rgba(247,201,72,0.15); color: var(--yellow); }
 
+  /* ── MOBILE TOP BAR ── */
+  .mobile-topbar {
+    display: none;
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 56px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    z-index: 100;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+  }
+
+  .mobile-topbar-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 18px;
+  }
+  .mobile-topbar-logo span { color: var(--accent); }
+
+  .mobile-topbar-user {
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .mobile-topbar-user .avatar {
+    width: 30px; height: 30px; font-size: 12px;
+  }
+
+  /* ── MOBILE BOTTOM NAV ── */
+  .mobile-bottom-nav {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 64px;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    z-index: 100;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 8px;
+  }
+
+  .mob-nav-item {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 3px; flex: 1;
+    padding: 8px 4px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 500;
+    border-radius: 10px;
+    transition: color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mob-nav-item .mob-icon { font-size: 20px; }
+  .mob-nav-item.active { color: var(--accent); }
+  .mob-nav-item.active .mob-icon {
+    filter: drop-shadow(0 0 6px rgba(79,142,247,0.5));
+  }
+
   /* ── MOBILE SLIDESHOW ── */
   .slide {
     position: absolute; inset: 0;
@@ -737,6 +797,58 @@
       padding: 36px 24px 40px !important;
       max-height: 90vh;
       overflow-y: auto;
+    }
+
+    /* ── MOBILE APP LAYOUT ── */
+
+    /* hide sidebar, show bottom nav */
+    .sidebar { display: none !important; }
+
+    .mobile-topbar {
+      display: flex !important;
+    }
+
+    .mobile-bottom-nav {
+      display: flex !important;
+    }
+
+    .main {
+      margin-left: 0 !important;
+      padding: 16px 16px 80px !important;
+      padding-top: 64px !important;
+    }
+
+    .page-title { font-size: 20px !important; }
+
+    .stats-row {
+      grid-template-columns: 1fr 1fr !important;
+      gap: 10px !important;
+    }
+
+    .stat-value { font-size: 22px !important; }
+
+    .cards-grid {
+      grid-template-columns: 1fr !important;
+    }
+
+    .inline-form {
+      grid-template-columns: 1fr !important;
+    }
+
+    .inline-form .full { grid-column: 1 !important; }
+
+    table { font-size: 12px !important; }
+    th, td { padding: 9px 10px !important; }
+
+    .modal { padding: 24px 18px !important; }
+
+    .panel { padding: 16px !important; }
+
+    #toast {
+      bottom: 90px !important;
+      left: 16px !important;
+      right: 16px !important;
+      max-width: 100% !important;
     }
   }
 
@@ -871,6 +983,35 @@
 
 <!-- ══════════════════════════════════════════ MAIN APP -->
 <div id="app">
+
+  <!-- Mobile top bar -->
+  <div class="mobile-topbar">
+    <div class="mobile-topbar-logo">Course<span>Flow</span></div>
+    <div class="mobile-topbar-user">
+      <div class="avatar" id="mob-avatar">?</div>
+      <button class="btn-logout" onclick="logout()" style="padding:6px 12px;font-size:12px">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- Mobile bottom nav -->
+  <div class="mobile-bottom-nav">
+    <div class="mob-nav-item active" id="mob-nav-dashboard" onclick="showPage('dashboard');setMobNav('dashboard')">
+      <span class="mob-icon">⬡</span>Home
+    </div>
+    <div class="mob-nav-item" id="mob-nav-courses" onclick="showPage('courses');setMobNav('courses')">
+      <span class="mob-icon">📚</span>Courses
+    </div>
+    <div class="mob-nav-item" id="mob-nav-my-courses" onclick="showPage('my-courses');setMobNav('my-courses')">
+      <span class="mob-icon">🎓</span>Mine
+    </div>
+    <div class="mob-nav-item" id="mob-nav-forums" onclick="showPage('forums');setMobNav('forums')">
+      <span class="mob-icon">💬</span>Forums
+    </div>
+    <div class="mob-nav-item" id="mob-nav-events" onclick="showPage('events');setMobNav('events')">
+      <span class="mob-icon">📅</span>Events
+    </div>
+  </div>
+
   <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-logo">Course<span>Flow</span></div>
@@ -1186,6 +1327,7 @@ function showApp() {
   document.getElementById('sb-name').textContent  = currentUser.username;
   document.getElementById('sb-role').textContent  = currentUser.role;
   document.getElementById('sb-avatar').textContent = currentUser.username[0].toUpperCase();
+  document.getElementById('mob-avatar').textContent = currentUser.username[0].toUpperCase();
 
   // Show admin nav items
   if (currentUser.role === 'admin') {
@@ -1206,11 +1348,18 @@ function logout() {
 }
 
 // ── NAVIGATION ───────────────────────────────────────────────
+function setMobNav(id) {
+  document.querySelectorAll('.mob-nav-item').forEach(n => n.classList.remove('active'));
+  const el = document.getElementById('mob-nav-' + id);
+  if (el) el.classList.add('active');
+}
+
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
-  event.currentTarget.classList.add('active');
+  if (event && event.currentTarget) event.currentTarget.classList.add('active');
+  setMobNav(id);
   if (id === 'my-courses')   loadMyCourses();
   if (id === 'forums')       populateCourseSelects();
   if (id === 'events')       populateCourseSelects();
