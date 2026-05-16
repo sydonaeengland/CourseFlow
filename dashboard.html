@@ -1,0 +1,807 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CourseFlow â€" Dashboard</title>
+<link rel="stylesheet" href="/styles.css" />
+<style>
+  .qa-btn svg { width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0; }
+  .dash-course-icon svg { width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round; }
+
+  /* â"€â"€ ADMIN HERO BANNER â"€â"€ */
+  .admin-hero {
+    background: linear-gradient(135deg, #0d1424 0%, #1e3a5f 50%, #1d4ed8 100%);
+    border-radius: var(--radius-lg);
+    padding: 32px 36px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .admin-hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 260px; height: 260px;
+    border-radius: 50%;
+    background: rgba(37,99,235,0.18);
+    pointer-events: none;
+  }
+  .admin-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; right: 120px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    pointer-events: none;
+  }
+  .admin-hero-text { position: relative; z-index: 1; }
+  .admin-hero-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 8px;
+  }
+  .admin-hero-title {
+    font-size: 26px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.6px;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+  .admin-hero-sub {
+    font-size: 14px;
+    color: rgba(255,255,255,0.55);
+  }
+  .admin-hero-actions { display: flex; gap: 10px; flex-shrink: 0; position: relative; z-index: 1; }
+  .admin-hero-btn {
+    display: flex; align-items: center; gap: 7px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; text-decoration: none;
+    border: none; transition: all 0.15s;
+  }
+  .admin-hero-btn.primary { background: #2563eb; color: #fff; box-shadow: 0 4px 14px rgba(37,99,235,0.4); }
+  .admin-hero-btn.primary:hover { background: #1d4ed8; transform: translateY(-1px); }
+  .admin-hero-btn.secondary { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.15); }
+  .admin-hero-btn.secondary:hover { background: rgba(255,255,255,0.18); }
+  .admin-hero-btn svg { width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round; }
+
+  /* â"€â"€ ADMIN STAT CARDS â"€â"€ */
+  .admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .admin-stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    box-shadow: var(--shadow-sm);
+    display: flex; flex-direction: column; gap: 14px;
+    transition: box-shadow 0.2s, transform 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .admin-stat:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+  .admin-stat-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .admin-stat-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .admin-stat-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .admin-stat-icon svg { width:18px;height:18px;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;fill:none; }
+  .admin-stat-icon.blue   { background: var(--blue-light);   } .admin-stat-icon.blue   svg { stroke: var(--blue); }
+  .admin-stat-icon.green  { background: var(--green-light);  } .admin-stat-icon.green  svg { stroke: var(--green); }
+  .admin-stat-icon.purple { background: var(--purple-light); } .admin-stat-icon.purple svg { stroke: var(--purple); }
+  .admin-stat-icon.amber  { background: var(--amber-light);  } .admin-stat-icon.amber  svg { stroke: var(--amber); }
+  .admin-stat-value { font-size: 32px; font-weight: 800; letter-spacing: -1.5px; line-height: 1; color: var(--text); }
+  .admin-stat-sub { font-size: 12px; color: var(--text-muted); }
+  .admin-stat-accent {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .admin-stat-accent.blue   { background: linear-gradient(90deg, var(--blue), #60a5fa); }
+  .admin-stat-accent.green  { background: linear-gradient(90deg, var(--green), #4ade80); }
+  .admin-stat-accent.purple { background: linear-gradient(90deg, var(--purple), #a78bfa); }
+  .admin-stat-accent.amber  { background: linear-gradient(90deg, var(--amber), #fbbf24); }
+
+  /* â"€â"€ ADMIN QUICK ACTIONS â"€â"€ */
+  .admin-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .admin-action-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    display: flex; flex-direction: column; gap: 10px;
+    text-decoration: none;
+    transition: all 0.15s;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+  }
+  .admin-action-card:hover { border-color: var(--blue); box-shadow: 0 4px 16px rgba(37,99,235,0.1); transform: translateY(-2px); }
+  .admin-action-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .admin-action-icon svg { width:18px;height:18px;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;fill:none; }
+  .admin-action-icon.blue   { background: var(--blue-light);   } .admin-action-icon.blue   svg { stroke: var(--blue); }
+  .admin-action-icon.green  { background: var(--green-light);  } .admin-action-icon.green  svg { stroke: var(--green); }
+  .admin-action-icon.purple { background: var(--purple-light); } .admin-action-icon.purple svg { stroke: var(--purple); }
+  .admin-action-icon.amber  { background: var(--amber-light);  } .admin-action-icon.amber  svg { stroke: var(--amber); }
+  .admin-action-title { font-size: 13px; font-weight: 700; color: var(--text); }
+  .admin-action-desc  { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+
+  /* â"€â"€ TWO COLUMN LAYOUT â"€â"€ */
+  .dash-two-col { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+
+  /* â"€â"€ RECENT COURSES TABLE â"€â"€ */
+  .dash-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .dash-panel-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .dash-panel-title { font-size: 14px; font-weight: 700; color: var(--text); }
+  .dash-panel-link { font-size: 12px; font-weight: 500; color: var(--blue); text-decoration: none; }
+  .dash-panel-link:hover { text-decoration: underline; }
+
+  /* â"€â"€ ACTIVITY FEED â"€â"€ */
+  .activity-feed { display: flex; flex-direction: column; }
+  .activity-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    margin-top: 5px; flex-shrink: 0;
+  }
+  .activity-dot.blue   { background: var(--blue); }
+  .activity-dot.green  { background: var(--green); }
+  .activity-dot.purple { background: var(--purple); }
+  .activity-dot.amber  { background: var(--amber); }
+  .activity-text { font-size: 13px; color: var(--text); line-height: 1.4; }
+  .activity-time { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+
+  /* â"€â"€ STUDENT DASHBOARD â"€â"€ */
+  .student-hero {
+    background: linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 100%);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px;
+    margin-bottom: 28px;
+    display: flex; align-items: center; gap: 20px;
+    position: relative; overflow: hidden;
+  }
+  .student-hero::before {
+    content: '';
+    position: absolute; top: -40px; right: -40px;
+    width: 200px; height: 200px; border-radius: 50%;
+    background: rgba(255,255,255,0.06); pointer-events: none;
+  }
+  .student-hero-avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    border: 2px solid rgba(255,255,255,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 800; color: #fff;
+    flex-shrink: 0; position: relative; z-index: 1;
+  }
+  .student-hero-text { position: relative; z-index: 1; }
+  .student-hero-name { font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -0.4px; }
+  .student-hero-sub  { font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 3px; }
+
+  /* â"€â"€ LECTURER DASHBOARD â"€â"€ */
+  .lecturer-hero {
+    background: linear-gradient(135deg, #134e4a 0%, #0d9488 100%);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px;
+    margin-bottom: 28px;
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+    position: relative; overflow: hidden;
+  }
+  .lecturer-hero::before {
+    content: '';
+    position: absolute; top: -50px; right: -50px;
+    width: 220px; height: 220px; border-radius: 50%;
+    background: rgba(255,255,255,0.06); pointer-events: none;
+  }
+  .lecturer-hero-text { position: relative; z-index: 1; }
+  .lecturer-hero-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 6px; }
+  .lecturer-hero-name { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -0.4px; }
+  .lecturer-hero-sub  { font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 4px; }
+  .lecturer-hero-action {
+    display: flex; align-items: center; gap: 7px;
+    padding: 10px 18px; border-radius: 10px;
+    font-size: 13px; font-weight: 600; color: #fff;
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2);
+    text-decoration: none; transition: all 0.15s; flex-shrink: 0; position: relative; z-index: 1;
+  }
+  .lecturer-hero-action:hover { background: rgba(255,255,255,0.25); }
+  .lecturer-hero-action svg { width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round; }
+
+  @media (max-width: 960px) {
+    .admin-stats-grid { grid-template-columns: 1fr 1fr; }
+    .admin-actions-grid { grid-template-columns: 1fr 1fr; }
+    .dash-two-col { grid-template-columns: 1fr; }
+    .admin-hero-actions { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="dash-greeting">Dashboard</div>
+        <div class="topbar-sub" id="dash-sub">Here's what's happening today</div>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-semester">Fall Semester 2025</span>
+        <span class="role-chip" id="tb-role-chip"></span>
+        <a class="topbar-avatar-btn" href="/profile.html">
+          <div class="user-avatar" id="tb-avatar">?</div>
+          <span id="tb-username"></span>
+        </a>
+      </div>
+    </header>
+
+    <div class="page-content" id="dash-content">
+      <div class="loading"><div class="spinner"></div> Loadingâ€¦</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="course-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="cm-title">Course</div>
+      <button class="modal-close" onclick="closeModal('course-modal')">âœ•</button>
+    </div>
+    <div id="cm-body"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="/app.js"></script>
+<script>
+  if (!requireAuth()) {}
+  renderSidebar('dashboard');
+
+  const role = CF.user?.role;
+  const u    = CF.user;
+  const initial = (u?.fname || u?.username || '?')[0].toUpperCase();
+
+  document.getElementById('dash-greeting').textContent =
+    role === 'admin'    ? 'Admin Console'  :
+    role === 'lecturer' ? 'My Dashboard'   : 'My Dashboard';
+
+  document.getElementById('dash-sub').textContent =
+    role === 'admin'    ? 'System overview and management' :
+    role === 'lecturer' ? 'Your courses and upcoming activity' :
+                          'Your courses and upcoming events';
+
+  async function loadDashboard() {
+    const rc = await api('/courses');
+    CF.courses = rc.ok ? rc.data : [];
+
+    if (role === 'admin')    await renderAdmin();
+    else if (role === 'lecturer') await renderLecturer();
+    else                          await renderStudent();
+  }
+
+  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     ADMIN DASHBOARD
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+  async function renderAdmin() {
+    const totalCourses = CF.courses.length;
+
+    // fetch reports in parallel
+    const [rStudents, rLecturers, rTop] = await Promise.all([
+      api('/reports/students'),
+      api('/reports/lecturers'),
+      api('/reports/top-10-enrolled'),
+    ]);
+
+    const totalStudents  = rStudents.ok  ? rStudents.data.length  : 'â€"';
+    const totalLecturers = rLecturers.ok ? rLecturers.data.length : 'â€"';
+    const topCourses     = rTop.ok       ? rTop.data.slice(0, 5)  : [];
+
+    // count unassigned courses
+    const unassigned = CF.courses.filter(c => !c.lecturerID).length;
+
+    const name = u?.fname ? `${u.fname} ${u.lname || ''}`.trim() : u?.username || 'Admin';
+
+    document.getElementById('dash-content').innerHTML = `
+
+      <!-- HERO -->
+      <div class="admin-hero">
+        <div class="admin-hero-text">
+          <div class="admin-hero-eyebrow">Administrator</div>
+          <div class="admin-hero-title">Welcome back, ${name}</div>
+          <div class="admin-hero-sub">Full system access Â· Fall Semester 2025</div>
+        </div>
+        <div class="admin-hero-actions">
+          <a class="admin-hero-btn primary" href="/admin.html">
+            <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            Admin Console
+          </a>
+          <a class="admin-hero-btn secondary" href="/courses.html">
+            <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            All Courses
+          </a>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="admin-stats-grid">
+        <div class="admin-stat">
+          <div class="admin-stat-top">
+            <span class="admin-stat-label">Total Courses</span>
+            <div class="admin-stat-icon blue">
+              <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </div>
+          </div>
+          <div class="admin-stat-value">${totalCourses}</div>
+          <div class="admin-stat-sub">${unassigned} unassigned</div>
+          <div class="admin-stat-accent blue"></div>
+        </div>
+        <div class="admin-stat">
+          <div class="admin-stat-top">
+            <span class="admin-stat-label">Students</span>
+            <div class="admin-stat-icon green">
+              <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+          </div>
+          <div class="admin-stat-value">${totalStudents}</div>
+          <div class="admin-stat-sub">In 5+ courses</div>
+          <div class="admin-stat-accent green"></div>
+        </div>
+        <div class="admin-stat">
+          <div class="admin-stat-top">
+            <span class="admin-stat-label">Lecturers</span>
+            <div class="admin-stat-icon purple">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/><path d="M12 12v9"/><path d="M9 15l3-3 3 3"/></svg>
+            </div>
+          </div>
+          <div class="admin-stat-value">${totalLecturers}</div>
+          <div class="admin-stat-sub">Teaching 3+ courses</div>
+          <div class="admin-stat-accent purple"></div>
+        </div>
+        <div class="admin-stat">
+          <div class="admin-stat-top">
+            <span class="admin-stat-label">Unassigned</span>
+            <div class="admin-stat-icon amber">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+          </div>
+          <div class="admin-stat-value">${unassigned}</div>
+          <div class="admin-stat-sub">${unassigned > 0 ? 'Needs a lecturer' : 'All assigned'}</div>
+          <div class="admin-stat-accent amber"></div>
+        </div>
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <div class="section-header" style="margin-bottom:14px">
+        <div class="section-title">Quick Actions</div>
+      </div>
+      <div class="admin-actions-grid" style="margin-bottom:28px">
+        <a class="admin-action-card" href="/admin.html">
+          <div class="admin-action-icon blue">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          </div>
+          <div class="admin-action-title">System Reports</div>
+          <div class="admin-action-desc">View enrollment and performance analytics</div>
+        </a>
+        <a class="admin-action-card" href="/admin.html" onclick="sessionStorage.setItem('adminTab','create')">
+          <div class="admin-action-icon green">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          </div>
+          <div class="admin-action-title">Create Course</div>
+          <div class="admin-action-desc">Add a new course to the catalog</div>
+        </a>
+        <a class="admin-action-card" href="/admin.html" onclick="sessionStorage.setItem('adminTab','mgmt')">
+          <div class="admin-action-icon purple">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="admin-action-title">Assign Lecturers</div>
+          <div class="admin-action-desc">Manage course lecturer assignments</div>
+        </a>
+        <a class="admin-action-card" href="/courses.html">
+          <div class="admin-action-icon amber">
+            <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </div>
+          <div class="admin-action-title">Browse Courses</div>
+          <div class="admin-action-desc">View the full course catalog</div>
+        </a>
+      </div>
+
+      <!-- BOTTOM TWO COL -->
+      <div class="dash-two-col">
+        <!-- TOP ENROLLED COURSES -->
+        <div class="dash-panel">
+          <div class="dash-panel-header">
+            <div class="dash-panel-title">Top Enrolled Courses</div>
+            <a class="dash-panel-link" href="/admin.html">View reports</a>
+          </div>
+          ${topCourses.length ? `
+          <table>
+            <thead><tr><th>Code</th><th>Course</th><th style="text-align:right">Students</th></tr></thead>
+            <tbody>${topCourses.map(c => `
+              <tr>
+                <td><strong>${c.ccode}</strong></td>
+                <td>${c.cname}</td>
+                <td style="text-align:right"><span class="badge badge-blue">${c.student_count}</span></td>
+              </tr>`).join('')}
+            </tbody>
+          </table>` : '<div class="empty-state" style="padding:24px"><p>No data</p></div>'}
+        </div>
+
+        <!-- UNASSIGNED COURSES -->
+        <div class="dash-panel">
+          <div class="dash-panel-header">
+            <div class="dash-panel-title">Needs Lecturer</div>
+            <a class="dash-panel-link" href="/admin.html">Assign</a>
+          </div>
+          <div class="activity-feed">
+            ${CF.courses.filter(c => !c.lecturerID).slice(0, 6).map(c => `
+              <div class="activity-item">
+                <div class="activity-dot amber"></div>
+                <div>
+                  <div class="activity-text"><strong>${c.ccode}</strong> â€" ${c.cname}</div>
+                  <div class="activity-time">No lecturer assigned</div>
+                </div>
+              </div>`).join('') || `<div class="activity-item"><div class="activity-dot green"></div><div class="activity-text">All courses have lecturers</div></div>`}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     LECTURER DASHBOARD
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+  async function renderLecturer() {
+    const rm = await api(`/courses/lecturer/${u.userID}`);
+    const myCourses = rm.ok ? rm.data : [];
+    const name = u?.fname ? `${u.fname} ${u.lname || ''}`.trim() : u?.username || '';
+    const h = new Date().getHours();
+    const greeting = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+    const initial = (u?.fname || u?.username || '?')[0].toUpperCase();
+    const today = new Date().toISOString().split('T')[0];
+
+    // Fetch events + forums for all courses in parallel
+    const perCourse = await Promise.all(myCourses.map(async c => {
+      const courseID = c.courseID || CF.courses.find(fc => fc.ccode === c.ccode)?.courseID;
+      const [evRes, fRes] = await Promise.all([
+        courseID ? api(`/courses/${courseID}/events`) : Promise.resolve({ ok: false }),
+        courseID ? api(`/courses/${courseID}/forums`) : Promise.resolve({ ok: false }),
+      ]);
+      return { ...c, courseID, events: evRes.ok ? evRes.data : [], forums: fRes.ok ? fRes.data : [] };
+    }));
+
+    const totalStudents  = perCourse.reduce((s, c) => s + (c.student_count || 0), 0);
+    const totalForums    = perCourse.reduce((s, c) => s + c.forums.length, 0);
+    const totalEvents    = perCourse.reduce((s, c) => s + c.events.length, 0);
+    const upcomingEvents = perCourse.flatMap(c => c.events
+      .filter(e => e.event_date >= today)
+      .map(e => ({ ...e, ccode: c.ccode, courseID: c.courseID })))
+      .sort((a, b) => a.event_date.localeCompare(b.event_date)).slice(0, 5);
+
+    // Build HTML strings before the template literal (avoids nested backtick issues with SVG icons)
+    const courseRowsHTML = perCourse.length ? perCourse.map(c => {
+      const sub = classifyCourse(c.cname, c.ccode);
+      return '<a class="activity-item" href="/course.html?id=' + c.courseID + '" style="text-decoration:none;display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border);transition:background 0.12s" onmouseover="this.style.background=\'var(--border-light)\'" onmouseout="this.style.background=\'\'">'
+        + '<div style="width:38px;height:38px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center" class="' + sub.cls + ' dash-course-icon">' + sub.icon + '</div>'
+        + '<div style="flex:1;min-width:0">'
+        + '<div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + c.ccode + ' &mdash; ' + c.cname + '</div>'
+        + '<div style="font-size:12px;color:var(--text-muted);margin-top:2px">' + (c.student_count || 0) + ' students &middot; ' + c.forums.length + ' forum' + (c.forums.length !== 1 ? 's' : '') + '</div>'
+        + '</div>'
+        + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-light)" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>'
+        + '</a>';
+    }).join('') : '<div class="empty-state" style="padding:32px"><p>No courses assigned yet</p></div>';
+
+    const eventRowsHTML = upcomingEvents.length ? upcomingEvents.map(e => {
+      const d = new Date(e.event_date + 'T00:00:00');
+      return '<a class="activity-item" href="/course.html?id=' + e.courseID + '" style="text-decoration:none;display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border);transition:background 0.12s" onmouseover="this.style.background=\'var(--border-light)\'" onmouseout="this.style.background=\'\'">'
+        + '<div style="width:40px;height:40px;border-radius:10px;background:var(--blue-light);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0">'
+        + '<span style="font-size:8px;font-weight:800;color:var(--blue);text-transform:uppercase;letter-spacing:.04em;line-height:1">' + d.toLocaleString('default', {month:'short'}).toUpperCase() + '</span>'
+        + '<span style="font-size:15px;font-weight:800;color:var(--blue);line-height:1">' + d.getDate() + '</span>'
+        + '</div>'
+        + '<div style="flex:1;min-width:0">'
+        + '<div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + e.title + '</div>'
+        + '<div style="font-size:12px;color:var(--text-muted);margin-top:2px">' + e.ccode + (e.start_time ? ' &middot; ' + e.start_time : '') + '</div>'
+        + '</div></a>';
+    }).join('') : '<div class="empty-state" style="padding:32px"><p>No upcoming events</p></div>';
+
+    document.getElementById('dash-content').innerHTML = `
+      <!-- HERO -->
+      <div style="background:linear-gradient(135deg,#134e4a 0%,#0d9488 60%,#0891b2 100%);border-radius:var(--radius-lg);padding:32px 36px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;gap:24px;position:relative;overflow:hidden">
+        <div style="position:absolute;inset:0;background-image:radial-gradient(circle at 80% 50%,rgba(255,255,255,0.07) 0%,transparent 55%);pointer-events:none"></div>
+        <div style="display:flex;align-items:center;gap:20px;position:relative;z-index:1">
+          <div style="width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,0.18);border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;flex-shrink:0">${initial}</div>
+          <div>
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;color:rgba(255,255,255,0.5);margin-bottom:4px">${greeting} &middot; Lecturer</div>
+            <div style="font-size:24px;font-weight:800;color:#fff;letter-spacing:-0.5px;line-height:1.2">${name}</div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-top:4px">Teaching ${myCourses.length} course${myCourses.length !== 1 ? 's' : ''} &middot; ${totalStudents} students enrolled</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;flex-shrink:0;position:relative;z-index:1;flex-wrap:wrap">
+          <a href="/events.html" style="display:flex;align-items:center;gap:7px;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;color:#fff;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.22);text-decoration:none;transition:all 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Schedule
+          </a>
+          <a href="/forums.html" style="display:flex;align-items:center;gap:7px;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;color:#fff;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.22);text-decoration:none;transition:all 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Forums
+          </a>
+        </div>
+      </div>
+
+      <!-- STAT CARDS -->
+      <div class="admin-stats-grid" style="margin-bottom:28px">
+        <div class="admin-stat">
+          <div class="admin-stat-top"><span class="admin-stat-label">My Courses</span>
+            <div class="admin-stat-icon purple"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+          </div>
+          <div class="admin-stat-value">${myCourses.length}</div>
+          <div class="admin-stat-sub">Courses you teach</div>
+          <div class="admin-stat-accent purple"></div>
+        </div>
+        <div class="admin-stat">
+          <div class="admin-stat-top"><span class="admin-stat-label">Total Students</span>
+            <div class="admin-stat-icon blue"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          </div>
+          <div class="admin-stat-value">${totalStudents}</div>
+          <div class="admin-stat-sub">Across all your courses</div>
+          <div class="admin-stat-accent blue"></div>
+        </div>
+        <div class="admin-stat">
+          <div class="admin-stat-top"><span class="admin-stat-label">Upcoming Events</span>
+            <div class="admin-stat-icon amber"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          </div>
+          <div class="admin-stat-value">${upcomingEvents.length}</div>
+          <div class="admin-stat-sub">${totalEvents} total scheduled</div>
+          <div class="admin-stat-accent amber"></div>
+        </div>
+        <div class="admin-stat">
+          <div class="admin-stat-top"><span class="admin-stat-label">Active Forums</span>
+            <div class="admin-stat-icon green"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+          </div>
+          <div class="admin-stat-value">${totalForums}</div>
+          <div class="admin-stat-sub">Across your courses</div>
+          <div class="admin-stat-accent green"></div>
+        </div>
+      </div>
+
+      <!-- TWO COL: My Courses + Upcoming Events -->
+      <div class="dash-two-col" style="margin-bottom:28px">
+        <div class="dash-panel">
+          <div class="dash-panel-header">
+            <div class="dash-panel-title">My Courses</div>
+            <a class="dash-panel-link" href="/enrolments.html">View all &rarr;</a>
+          </div>
+          ${courseRowsHTML}
+        </div>
+
+        <div class="dash-panel">
+          <div class="dash-panel-header">
+            <div class="dash-panel-title">Upcoming Events</div>
+            <a class="dash-panel-link" href="/events.html">View all &rarr;</a>
+          </div>
+          ${eventRowsHTML}
+        </div>
+      </div>
+    `;
+  }
+
+  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     STUDENT DASHBOARD
+  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+  async function renderStudent() {
+    const rm = await api(`/courses/student/${u.userID}`);
+    const myCourses = rm.ok ? rm.data : [];
+    const fname = u?.fname || u?.username || 'Student';
+    const initial = fname[0]?.toUpperCase() || '?';
+    const h = new Date().getHours();
+    const greeting = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+
+    // enrich with courseID from full catalog
+    const enriched = myCourses.map(c => ({ ...c, ...(CF.courses.find(fc => fc.ccode === c.ccode) || {}) }));
+
+    // fetch today's events for the student
+    const today = new Date().toISOString().split('T')[0];
+    const re = await api(`/students/${u.userID}/events?date=${today}`);
+    const todayEvents = re.ok ? re.data : [];
+
+    // fetch upcoming events across all enrolled courses (first 3 courses)
+    let upcomingEvents = [];
+    for (const c of enriched.slice(0, 3)) {
+      if (!c.courseID) continue;
+      const ev = await api(`/courses/${c.courseID}/events`);
+      if (ev.ok) upcomingEvents.push(...ev.data.map(e => ({ ...e, ccode: c.ccode, cname: c.cname })));
+    }
+    upcomingEvents = upcomingEvents
+      .filter(e => e.event_date >= today)
+      .sort((a,b) => (a.event_date+a.start_time).localeCompare(b.event_date+b.start_time))
+      .slice(0, 5);
+
+    function fmtDate(d) {
+      if (!d) return 'â€"';
+      const dt = new Date(d + 'T00:00:00');
+      return dt.toLocaleDateString('en', { month: 'short', day: 'numeric' });
+    }
+    function fmtTime(t) {
+      if (!t) return '';
+      const [h,m] = t.split(':');
+      const hr = parseInt(h);
+      return `${hr>12?hr-12:hr||12}:${m} ${hr>=12?'PM':'AM'}`;
+    }
+
+    document.getElementById('dash-content').innerHTML = `
+      <!-- HERO -->
+      <div class="student-hero" style="background:linear-gradient(135deg,#0d1424 0%,#0f2044 45%,#1e3a5f 100%);border-radius:var(--radius-lg);padding:32px 36px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;gap:24px;position:relative;overflow:hidden">
+        <div style="position:absolute;inset:0;background-image:radial-gradient(circle at 70% 50%,rgba(37,99,235,0.18) 0%,transparent 55%),radial-gradient(circle at 20% 80%,rgba(124,58,237,0.1) 0%,transparent 45%);pointer-events:none"></div>
+        <div style="display:flex;align-items:center;gap:20px;position:relative;z-index:1">
+          <div style="width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:#fff;flex-shrink:0;box-shadow:0 8px 24px rgba(37,99,235,0.35)">${initial}</div>
+          <div>
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;color:rgba(255,255,255,0.45);margin-bottom:4px">${greeting}</div>
+            <div style="font-size:24px;font-weight:800;color:#fff;letter-spacing:-0.5px;line-height:1.2">${fname}</div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:4px">Enrolled in ${myCourses.length} course${myCourses.length!==1?'s':''} this semester</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;flex-shrink:0;position:relative;z-index:1">
+          <a href="/courses.html" style="display:flex;align-items:center;gap:7px;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;color:#fff;background:#2563eb;border:none;text-decoration:none;box-shadow:0 4px 14px rgba(37,99,235,0.4);transition:all 0.15s">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            Browse Courses
+          </a>
+        </div>
+      </div>
+
+      <!-- STAT CARDS -->
+      <div class="admin-stats-grid" style="margin-bottom:28px">
+        <div class="admin-stat">
+          <div class="admin-stat-top"><span class="admin-stat-label">My Courses</span>
+            <div class="admin-stat-icon blue"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+          </div>
+          <div class="admin-stat-value">${myCourses.length}</div>
+          <div class="admin-stat-sub">Currently enrolled</div>
+          <div class="admin-stat-accent blue"></div>
+        </div>
+        <div class="admin-stat">
+          <div class="admin-stat-top"><span class="admin-stat-label">Today's Events</span>
+            <div class="admin-stat-icon amber"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          </div>
+          <div class="admin-stat-value">${todayEvents.length}</div>
+          <div class="admin-stat-sub">${todayEvents.length ? 'Scheduled today' : 'Nothing today'}</div>
+          <div class="admin-stat-accent amber"></div>
+        </div>
+        <div class="admin-stat">
+          <div class="admin-stat-top"><span class="admin-stat-label">Upcoming</span>
+            <div class="admin-stat-icon green"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+          </div>
+          <div class="admin-stat-value">${upcomingEvents.length}</div>
+          <div class="admin-stat-sub">Events ahead</div>
+          <div class="admin-stat-accent green"></div>
+        </div>
+        <div class="admin-stat">
+          <div class="admin-stat-top"><span class="admin-stat-label">Available</span>
+            <div class="admin-stat-icon purple"><svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>
+          </div>
+          <div class="admin-stat-value">${CF.courses.length}</div>
+          <div class="admin-stat-sub">Courses in catalog</div>
+          <div class="admin-stat-accent purple"></div>
+        </div>
+      </div>
+
+      <!-- TWO COL: My Courses + Upcoming Events -->
+      <div class="dash-two-col" style="margin-bottom:28px">
+        <!-- My Courses -->
+        <div class="dash-panel">
+          <div class="dash-panel-header">
+            <div class="dash-panel-title">My Courses</div>
+            <a class="dash-panel-link" href="/enrolments.html">View all &rarr;</a>
+          </div>
+          ${enriched.length ? `<table>
+            <thead><tr><th>Code</th><th>Course</th><th>Lecturer</th></tr></thead>
+            <tbody>${enriched.map(c => `
+              <tr style="cursor:pointer" onclick="viewCourse(${c.courseID}, 'enrolments')">
+                <td><span class="badge badge-blue" style="font-size:10px;font-weight:700">${c.ccode}</span></td>
+                <td style="font-weight:500">${c.cname}</td>
+                <td style="font-size:12px;color:var(--text-muted)">${c.fname ? c.fname+' '+c.lname : '<span style="color:var(--amber)">TBA</span>'}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>` : `<div class="empty-state" style="padding:32px">
+            <p>You're not enrolled in any courses yet</p>
+            <a href="/courses.html" class="btn btn-primary btn-sm" style="margin-top:12px">Browse Courses</a>
+          </div>`}
+        </div>
+
+        <!-- Upcoming Events -->
+        <div class="dash-panel">
+          <div class="dash-panel-header">
+            <div class="dash-panel-title">Upcoming Events</div>
+            <a class="dash-panel-link" href="/events.html">View all &rarr;</a>
+          </div>
+          <div class="activity-feed">
+            ${upcomingEvents.length ? upcomingEvents.map(ev => {
+              const d = new Date(ev.event_date + 'T00:00:00');
+              const month = d.toLocaleString('en',{month:'short'});
+              const day = d.getDate();
+              return `<div class="activity-item" style="gap:14px">
+                <div style="text-align:center;min-width:40px;background:var(--blue-light);border-radius:8px;padding:6px 4px;flex-shrink:0">
+                  <div style="font-size:9px;font-weight:800;text-transform:uppercase;color:var(--blue)">${month}</div>
+                  <div style="font-size:20px;font-weight:900;line-height:1;color:var(--blue)">${day}</div>
+                </div>
+                <div style="min-width:0">
+                  <div class="activity-text" style="font-weight:600">${ev.title}</div>
+                  <div class="activity-time">${ev.ccode} Â· ${fmtTime(ev.start_time)||'All day'}</div>
+                </div>
+              </div>`;
+            }).join('') : `<div class="activity-item">
+              <div class="activity-dot green"></div>
+              <div class="activity-text" style="color:var(--text-muted)">No upcoming events</div>
+            </div>`}
+          </div>
+        </div>
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Quick Actions</div>
+        </div>
+        <div class="panel-body">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+            <a href="/courses.html" class="admin-action-card">
+              <div class="admin-action-icon blue"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+              <div class="admin-action-title">Browse Courses</div>
+              <div class="admin-action-desc">Find and enroll in new courses</div>
+            </a>
+            <a href="/forums.html" class="admin-action-card">
+              <div class="admin-action-icon purple"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+              <div class="admin-action-title">Forums</div>
+              <div class="admin-action-desc">Discussions for your courses</div>
+            </a>
+            <a href="/events.html" class="admin-action-card">
+              <div class="admin-action-icon amber"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+              <div class="admin-action-title">Schedule</div>
+              <div class="admin-action-desc">View upcoming events and deadlines</div>
+            </a>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  loadDashboard();
+</script>
+</body>
+</html>

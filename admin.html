@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CourseFlow — Admin Dashboard</title>
+<link rel="stylesheet" href="/styles.css" />
+<style>
+  /* ── HERO BANNER ── */
+  .admin-hero {
+    background: linear-gradient(135deg, #0d1424 0%, #0f2044 45%, #1e3a5f 100%);
+    border-radius: var(--radius-lg);
+    padding: 36px 40px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .admin-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 70% 50%, rgba(37,99,235,0.18) 0%, transparent 55%),
+      radial-gradient(circle at 20% 80%, rgba(124,58,237,0.1) 0%, transparent 45%);
+    pointer-events: none;
+  }
+  .hero-content { position: relative; z-index: 1; }
+  .hero-greeting {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 6px;
+  }
+  .hero-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.6px;
+    margin-bottom: 6px;
+  }
+  .hero-sub {
+    font-size: 14px;
+    color: rgba(255,255,255,0.5);
+  }
+  .hero-watermark {
+    position: relative; z-index: 1;
+    opacity: 0.07;
+    flex-shrink: 0;
+  }
+  .hero-watermark svg { width: 140px; height: 140px; stroke: #fff; fill: none; stroke-width: 1; }
+
+  /* ── STAT CARDS ── */
+  .stat-icon-box {
+    width: 42px; height: 42px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .stat-icon-box svg { width: 20px; height: 20px; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+  .stat-icon-box.blue   { background: var(--blue-light);   }
+  .stat-icon-box.blue   svg { stroke: var(--blue); }
+  .stat-icon-box.green  { background: var(--green-light);  }
+  .stat-icon-box.green  svg { stroke: var(--green); }
+  .stat-icon-box.amber  { background: var(--amber-light);  }
+  .stat-icon-box.amber  svg { stroke: var(--amber); }
+  .stat-icon-box.red    { background: var(--red-light);    }
+  .stat-icon-box.red    svg { stroke: var(--red); }
+
+  .stat-card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .stat-trend {
+    font-size: 11px; font-weight: 600;
+    display: flex; align-items: center; gap: 3px;
+    color: var(--text-light);
+  }
+  .stat-trend svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2.5; }
+
+  /* ── RANK TABLE ── */
+  .rank-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    font-size: 11px; font-weight: 700;
+    background: var(--bg);
+    color: var(--text-muted);
+  }
+  .rank-num.gold   { background: #fef3c7; color: #92400e; }
+  .rank-num.silver { background: #f1f5f9; color: #475569; }
+  .rank-num.bronze { background: #fdf2e9; color: #92400e; }
+
+  .tbl-avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #fff;
+    flex-shrink: 0;
+  }
+
+  /* ── QUICK ACTION CARDS ── */
+  .qa-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .qa-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 20px;
+    text-decoration: none;
+    color: inherit;
+    transition: box-shadow 0.2s, transform 0.15s, border-color 0.15s;
+    display: flex; flex-direction: column; gap: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .qa-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+    border-color: var(--blue);
+  }
+  .qa-card-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .qa-card-icon svg { width: 18px; height: 18px; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+  .qa-card-title { font-size: 14px; font-weight: 700; }
+  .qa-card-desc  { font-size: 12px; color: var(--text-muted); line-height: 1.5; flex: 1; }
+  .qa-card-arrow {
+    font-size: 18px; color: var(--text-light);
+    align-self: flex-end;
+    transition: transform 0.15s, color 0.15s;
+  }
+  .qa-card:hover .qa-card-arrow { transform: translateX(4px); color: var(--blue); }
+
+  @media (max-width: 900px) {
+    .qa-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title">Admin Dashboard</div>
+        <div class="topbar-sub">System overview</div>
+      </div>
+      <div class="topbar-right">
+        <span class="role-chip admin" id="tb-role-chip">admin</span>
+        <a class="topbar-avatar-btn" href="/profile.html">
+          <div class="user-avatar" id="tb-avatar">?</div>
+          <span id="tb-username"></span>
+        </a>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- HERO BANNER -->
+      <div class="admin-hero">
+        <div class="hero-content">
+          <div class="hero-greeting">Admin Portal</div>
+          <div class="hero-title" id="hero-greeting-text">Good morning</div>
+          <div class="hero-sub">Here's what's happening in your platform today</div>
+        </div>
+        <div class="hero-watermark">
+          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <!-- Graduation cap -->
+            <path d="M60 20 L100 42 L60 64 L20 42 Z" stroke-width="2"/>
+            <path d="M80 53 L80 78 C80 78 70 88 60 88 C50 88 40 78 40 78 L40 53" stroke-width="2"/>
+            <path d="M100 42 L100 62" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="100" cy="65" r="4" fill="rgba(255,255,255,0.5)" stroke="none"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- STAT CARDS -->
+      <div class="stats-grid mb-24">
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Total Courses</span>
+            <div class="stat-icon-box blue">
+              <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            </div>
+          </div>
+          <div class="stat-value" id="stat-courses">—</div>
+          <div class="stat-trend">
+            <svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            Active courses
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Students</span>
+            <div class="stat-icon-box green">
+              <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+          </div>
+          <div class="stat-value" id="stat-students">—</div>
+          <div class="stat-trend">Enrolled learners</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Lecturers</span>
+            <div class="stat-icon-box amber">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/><path d="M16 11l4 4-4 4"/></svg>
+            </div>
+          </div>
+          <div class="stat-value" id="stat-lecturers">—</div>
+          <div class="stat-trend">Teaching staff</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <span class="stat-label">Unassigned Courses</span>
+            <div class="stat-icon-box red">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+          </div>
+          <div class="stat-value" id="stat-unassigned">—</div>
+          <div class="stat-trend">Need a lecturer</div>
+        </div>
+      </div>
+
+      <!-- TOP TABLES -->
+      <div class="two-col mb-24" style="grid-template-columns:1fr 1fr">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Top 10 Enrolled Courses</div>
+            <a href="/admin-reports.html" class="btn btn-ghost btn-sm">View all reports &rarr;</a>
+          </div>
+          <div id="top-enrolled-table"><div class="loading"><div class="spinner"></div> Loading…</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Top 10 Students by Average</div>
+          </div>
+          <div id="top-students-table"><div class="loading"><div class="spinner"></div> Loading…</div></div>
+        </div>
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <div class="panel mt-24">
+        <div class="panel-header">
+          <div class="panel-title">Quick Actions</div>
+          <span style="font-size:12px;color:var(--text-muted)">Shortcuts to key admin areas</span>
+        </div>
+        <div class="panel-body">
+          <div class="qa-grid">
+            <a href="/admin-courses.html" class="qa-card">
+              <div class="qa-card-icon" style="background:var(--blue-light)">
+                <svg viewBox="0 0 24 24" style="stroke:var(--blue)"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              </div>
+              <div class="qa-card-title">Manage Courses</div>
+              <div class="qa-card-desc">View, edit and assign lecturers to all courses in the system.</div>
+              <div class="qa-card-arrow">&rarr;</div>
+            </a>
+
+            <a href="/admin-courses.html#create" class="qa-card">
+              <div class="qa-card-icon" style="background:var(--green-light)">
+                <svg viewBox="0 0 24 24" style="stroke:var(--green)"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              </div>
+              <div class="qa-card-title">Create Course</div>
+              <div class="qa-card-desc">Add a new course with a code, title, description and lecturer.</div>
+              <div class="qa-card-arrow">&rarr;</div>
+            </a>
+
+            <a href="/admin-users.html" class="qa-card">
+              <div class="qa-card-icon" style="background:var(--purple-light)">
+                <svg viewBox="0 0 24 24" style="stroke:var(--purple)"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <div class="qa-card-title">Manage Users</div>
+              <div class="qa-card-desc">Browse all registered users, filter by role and search by name.</div>
+              <div class="qa-card-arrow">&rarr;</div>
+            </a>
+
+            <a href="/admin-reports.html" class="qa-card">
+              <div class="qa-card-icon" style="background:var(--amber-light)">
+                <svg viewBox="0 0 24 24" style="stroke:var(--amber)"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              </div>
+              <div class="qa-card-title">View Reports</div>
+              <div class="qa-card-desc">Explore analytics — top enrolments, student averages and more.</div>
+              <div class="qa-card-arrow">&rarr;</div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+<script src="/app.js"></script>
+<script>
+  if (!requireRole('admin')) {}
+  renderSidebar('admin');
+
+  // Set greeting based on time of day
+  (function() {
+    const h = new Date().getHours();
+    const greeting = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+    const user = JSON.parse(localStorage.getItem('cf_user') || '{}');
+    const name = user.fname || user.username || '';
+    document.getElementById('hero-greeting-text').textContent = name ? `${greeting}, ${name}` : greeting;
+  })();
+
+  async function init() {
+    const [coursesRes, usersRes, enrolledRes, studentsRes] = await Promise.all([
+      api('/courses'),
+      api('/users'),
+      api('/reports/top-10-enrolled'),
+      api('/reports/top-10-students'),
+    ]);
+
+    const courses  = coursesRes.ok ? coursesRes.data : [];
+    const users    = usersRes.ok   ? usersRes.data   : [];
+    const students  = users.filter(u => u.role === 'student');
+    const lecturers = users.filter(u => u.role === 'lecturer');
+    const unassigned = courses.filter(c => !c.fname).length;
+
+    document.getElementById('stat-courses').textContent   = courses.length.toLocaleString();
+    document.getElementById('stat-students').textContent  = students.length.toLocaleString();
+    document.getElementById('stat-lecturers').textContent = lecturers.length.toLocaleString();
+    document.getElementById('stat-unassigned').textContent = unassigned;
+
+    const avatarColors = ['#2563eb','#7c3aed','#16a34a','#d97706','#0d9488','#dc2626','#0369a1','#be185d'];
+    function avatarColor(str) { let h=0; for(let c of (str||'A')) h=(h*31+c.charCodeAt(0))&0xffff; return avatarColors[h%avatarColors.length]; }
+    function initials(fname, lname) { return ((fname||'?')[0]+(lname||'')[0]).toUpperCase(); }
+
+    const enrolled = enrolledRes.ok ? enrolledRes.data : [];
+    document.getElementById('top-enrolled-table').innerHTML = enrolled.length ? `
+      <table>
+        <thead><tr><th>#</th><th>Code</th><th>Course</th><th>Students</th></tr></thead>
+        <tbody>${enrolled.map((c, i) => `<tr>
+          <td><span class="rank-num ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}</span></td>
+          <td><span class="badge badge-blue" style="font-size:10px">${c.ccode}</span></td>
+          <td style="font-weight:500">${c.cname}</td>
+          <td><strong style="color:var(--blue)">${c.student_count}</strong></td>
+        </tr>`).join('')}</tbody>
+      </table>` : '<div class="empty-state"><div class="empty-icon">📊</div><p>No data available</p></div>';
+
+    const topStudents = studentsRes.ok ? studentsRes.data : [];
+    document.getElementById('top-students-table').innerHTML = topStudents.length ? `
+      <table>
+        <thead><tr><th>#</th><th>Student</th><th style="white-space:nowrap;width:1%">Average</th></tr></thead>
+        <tbody>${topStudents.map((s, i) => `<tr>
+          <td><span class="rank-num ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}</span></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px;min-width:0">
+              <div class="tbl-avatar" style="background:${avatarColor(s.username)};flex-shrink:0;align-self:flex-start;margin-top:1px">${initials(s.fname,s.lname)}</div>
+              <div style="min-width:0">
+                <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.fname} ${s.lname}</div>
+                <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">@${s.username}</div>
+              </div>
+            </div>
+          </td>
+          <td class="tbl-grade-good" style="white-space:nowrap;width:1%;padding-right:16px">${parseFloat(s.overall_average).toFixed(1)}%</td>
+        </tr>`).join('')}</tbody>
+      </table>` : '<div class="empty-state"><div class="empty-icon">🎓</div><p>No data available</p></div>';
+  }
+
+  init();
+</script>
+</body>
+</html>

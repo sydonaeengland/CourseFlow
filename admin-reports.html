@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CourseFlow — Reports</title>
+<link rel="stylesheet" href="/styles.css" />
+<style>
+  /* ── REPORT CARD GRID ── */
+  .report-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  @media (max-width: 1100px) { .report-cards-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 700px)  { .report-cards-grid { grid-template-columns: repeat(2, 1fr); } }
+
+  .report-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 18px;
+    cursor: pointer;
+    transition: box-shadow 0.2s, border-color 0.15s, transform 0.15s;
+    display: flex; flex-direction: column; gap: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .report-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: #cbd5e1;
+    transform: translateY(-2px);
+  }
+  .report-card.selected {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.12), var(--shadow);
+    background: var(--blue-light);
+  }
+  .report-card.selected::after {
+    content: '';
+    position: absolute; top: 10px; right: 10px;
+    width: 18px; height: 18px;
+    background: var(--blue);
+    border-radius: 50%;
+    background-image: url("data:image/svg+xml,%3Csvg width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  .report-card-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .report-card-icon svg {
+    width: 18px; height: 18px; fill: none;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .report-card-title {
+    font-size: 13px; font-weight: 700;
+    line-height: 1.3;
+    color: var(--text);
+  }
+  .report-card.selected .report-card-title { color: var(--blue); }
+  .report-card-desc {
+    font-size: 11px; color: var(--text-muted); line-height: 1.5;
+    flex: 1;
+  }
+  .report-card.selected .report-card-desc { color: #3b82f6; }
+
+  /* ── RESULTS PANEL ── */
+  .report-panel-placeholder {
+    padding: 60px 20px;
+    text-align: center;
+  }
+  .report-panel-placeholder svg {
+    width: 56px; height: 56px;
+    stroke: var(--border); fill: none;
+    stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+    margin-bottom: 14px;
+  }
+  .report-panel-placeholder p {
+    font-size: 14px; color: var(--text-muted); font-weight: 500;
+  }
+  .report-panel-placeholder small {
+    font-size: 12px; color: var(--text-light);
+  }
+
+  .table-footer {
+    padding: 14px 24px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title">System Reports</div>
+        <div class="topbar-sub">Database views and analytics</div>
+      </div>
+      <div class="topbar-right">
+        <span class="role-chip admin" id="tb-role-chip">admin</span>
+        <a class="topbar-avatar-btn" href="/profile.html">
+          <div class="user-avatar" id="tb-avatar">?</div>
+          <span id="tb-username"></span>
+        </a>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- REPORT SELECTOR CARDS -->
+      <div class="report-cards-grid">
+        <div class="report-card report-btn" data-ep="courses" data-label="Courses with 50+ Students" onclick="loadReport(this)">
+          <div class="report-card-icon" style="background:var(--blue-light)">
+            <svg viewBox="0 0 24 24" style="stroke:var(--blue)"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <div class="report-card-title">Courses with 50+ Students</div>
+          <div class="report-card-desc">High-demand courses that have at least 50 enrolled students.</div>
+        </div>
+
+        <div class="report-card report-btn" data-ep="students" data-label="Students Doing 5+ Courses" onclick="loadReport(this)">
+          <div class="report-card-icon" style="background:var(--green-light)">
+            <svg viewBox="0 0 24 24" style="stroke:var(--green)"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="report-card-title">Students Doing 5+ Courses</div>
+          <div class="report-card-desc">Students with a heavy course load enrolled in 5 or more courses.</div>
+        </div>
+
+        <div class="report-card report-btn" data-ep="lecturers" data-label="Lecturers Teaching 3+ Courses" onclick="loadReport(this)">
+          <div class="report-card-icon" style="background:var(--purple-light)">
+            <svg viewBox="0 0 24 24" style="stroke:var(--purple)"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/><path d="M16 11l4 4-4 4"/></svg>
+          </div>
+          <div class="report-card-title">Lecturers Teaching 3+ Courses</div>
+          <div class="report-card-desc">Lecturers with a high teaching load across multiple courses.</div>
+        </div>
+
+        <div class="report-card report-btn" data-ep="top-10-enrolled" data-label="Top 10 Most Enrolled Courses" onclick="loadReport(this)">
+          <div class="report-card-icon" style="background:var(--amber-light)">
+            <svg viewBox="0 0 24 24" style="stroke:var(--amber)"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div class="report-card-title">Top 10 Most Enrolled</div>
+          <div class="report-card-desc">The ten courses with the highest student enrolment numbers.</div>
+        </div>
+
+        <div class="report-card report-btn" data-ep="top-10-students" data-label="Top 10 Students by Average" onclick="loadReport(this)">
+          <div class="report-card-icon" style="background:var(--teal-light)">
+            <svg viewBox="0 0 24 24" style="stroke:var(--teal)"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+          </div>
+          <div class="report-card-title">Top 10 Students by Average</div>
+          <div class="report-card-desc">Best-performing students ranked by their overall grade average.</div>
+        </div>
+      </div>
+
+      <!-- RESULTS PANEL -->
+      <div class="panel">
+        <div class="panel-header">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div id="report-title-icon" style="width:8px;height:8px;border-radius:50%;background:var(--blue);display:none;flex-shrink:0"></div>
+            <div class="panel-title" id="report-title">Select a report above</div>
+          </div>
+          <span style="font-size:12px;color:var(--text-muted)" id="report-count"></span>
+        </div>
+        <div id="report-table">
+          <div class="report-panel-placeholder">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><rect x="2" y="2" width="20" height="20" rx="3"/></svg>
+            <p>No report selected</p>
+            <small>Click a report card above to load data</small>
+          </div>
+        </div>
+        <div class="table-footer" style="border-top:none" id="report-footer">
+          <span></span>
+          <div class="pagination" id="report-pagination"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+<script src="/app.js"></script>
+<script>
+  if (!requireRole('admin')) {}
+  renderSidebar('admin-reports');
+
+  let reportData = [], reportPage = 1;
+  const PAGE_SIZE = 15;
+
+  async function loadReport(btn) {
+    document.querySelectorAll('.report-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    document.getElementById('report-title').textContent = btn.dataset.label;
+    document.getElementById('report-title-icon').style.display = 'block';
+    document.getElementById('report-table').innerHTML = '<div class="loading"><div class="spinner"></div> Loading report…</div>';
+    document.getElementById('report-count').textContent = '';
+    document.getElementById('report-pagination').innerHTML = '';
+    const r = await api(`/reports/${btn.dataset.ep}`);
+    reportData = r.ok ? r.data : [];
+    reportPage = 1;
+    if (!reportData.length) {
+      document.getElementById('report-table').innerHTML = `
+        <div class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <p>No data returned for this report</p>
+        </div>`;
+      return;
+    }
+    renderReportPage();
+  }
+
+  function renderReportPage() {
+    const keys  = Object.keys(reportData[0]);
+    const start = (reportPage-1)*PAGE_SIZE, slice = reportData.slice(start, start+PAGE_SIZE), total = reportData.length;
+    document.getElementById('report-count').textContent = `${total.toLocaleString()} result${total!==1?'s':''}`;
+    document.getElementById('report-table').innerHTML = `
+      <table>
+        <thead><tr>${keys.map(k=>`<th>${k.replace(/_/g,' ')}</th>`).join('')}</tr></thead>
+        <tbody>${slice.map((row,i)=>`<tr>${keys.map(k=>{
+          const v = row[k];
+          if (k==='student_count'||k==='course_count') return `<td><strong style="color:var(--blue)">${v}</strong></td>`;
+          if (k==='overall_average') return `<td class="tbl-grade-good">${parseFloat(v).toFixed(1)}%</td>`;
+          return `<td>${v??'—'}</td>`;
+        }).join('')}</tr>`).join('')}</tbody>
+      </table>`;
+    renderPagination('report-pagination', reportPage, Math.ceil(total/PAGE_SIZE), p => { reportPage=p; renderReportPage(); });
+  }
+
+  function renderPagination(elId, page, pages, goFn) {
+    if (pages <= 1) { document.getElementById(elId).innerHTML = ''; return; }
+    const start = Math.max(1, page-2), end = Math.min(pages, page+2);
+    document.getElementById(elId).innerHTML =
+      `<button class="page-btn text" onclick="(${goFn.toString()})(${page-1})" ${page===1?'disabled':''}>Prev</button>` +
+      (start>1?`<button class="page-btn" onclick="(${goFn.toString()})(1)">1</button>${start>2?'<span style="padding:0 4px">…</span>':''}` : '') +
+      Array.from({length:end-start+1},(_,i)=>start+i).map(p=>`<button class="page-btn ${p===page?'active':''}" onclick="(${goFn.toString()})(${p})">${p}</button>`).join('') +
+      (end<pages?`${end<pages-1?'<span style="padding:0 4px">…</span>':''}<button class="page-btn" onclick="(${goFn.toString()})(${pages})">${pages}</button>` : '') +
+      `<button class="page-btn text" onclick="(${goFn.toString()})(${page+1})" ${page===pages?'disabled':''}>Next</button>`;
+  }
+
+  loadReport(document.querySelector('.report-btn'));
+</script>
+</body>
+</html>

@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CourseFlow — Manage Courses</title>
+<link rel="stylesheet" href="/styles.css" />
+<style>
+  /* ── SEARCH BAR IN PANEL HEADER ── */
+  .search-field {
+    position: relative;
+    display: flex; align-items: center;
+  }
+  .search-field svg {
+    position: absolute; left: 10px;
+    width: 15px; height: 15px;
+    stroke: var(--text-muted); fill: none;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    pointer-events: none;
+  }
+  .search-field input {
+    padding: 7px 12px 7px 34px;
+    font-size: 13px;
+    width: 220px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .search-field input:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.08);
+    background: var(--surface);
+  }
+  .search-field input::placeholder { color: var(--text-light); }
+
+  /* ── SUBJECT DOT ── */
+  .subject-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: inline-block;
+  }
+
+  /* ── LECTURER MINI AVATAR ── */
+  .mini-avatar {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700; color: #fff;
+    flex-shrink: 0;
+  }
+
+  /* ── ASSIGN CARDS LAYOUT ── */
+  .assign-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+  .assign-select-card {
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: border-color 0.15s;
+  }
+  .assign-select-card:focus-within { border-color: var(--blue); }
+  .assign-card-label {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .assign-card-label svg {
+    width: 14px; height: 14px;
+    stroke: currentColor; fill: none;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  /* ── CREATE FORM ── */
+  .create-form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .form-section-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .form-section-icon {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--blue-light);
+  }
+  .form-section-icon svg {
+    width: 16px; height: 16px;
+    stroke: var(--blue); fill: none;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .form-section-title { font-size: 14px; font-weight: 700; }
+  .form-section-sub   { font-size: 12px; color: var(--text-muted); }
+
+  .assign-course-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 16px; cursor: pointer;
+    border-bottom: 1px solid var(--border-light);
+    transition: background 0.12s;
+  }
+  .assign-course-row:last-child { border-bottom: none; }
+  .assign-course-row:hover { background: var(--bg); }
+  .assign-course-row.selected { background: var(--blue-light); }
+  .assign-course-row.selected .assign-course-code { background: var(--blue); color: #fff; }
+  .assign-course-code {
+    font-size: 11px; font-weight: 700;
+    background: var(--bg); color: var(--text-muted);
+    border-radius: 6px; padding: 3px 8px;
+    white-space: nowrap; flex-shrink: 0;
+    border: 1px solid var(--border);
+  }
+  .assign-course-name { font-size: 13px; font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .assign-course-lec  { font-size: 11px; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; }
+  .assign-confirm-row {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .assign-confirm-info { font-size: 13px; color: var(--text-muted); }
+  .assign-confirm-info strong { color: var(--text); }
+
+  .table-footer {
+    padding: 14px 24px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title">Courses</div>
+        <div class="topbar-sub">Create and manage all courses</div>
+      </div>
+      <div class="topbar-right">
+        <span class="role-chip admin" id="tb-role-chip">admin</span>
+        <a class="topbar-avatar-btn" href="/profile.html">
+          <div class="user-avatar" id="tb-avatar">?</div>
+          <span id="tb-username"></span>
+        </a>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- TAB BAR -->
+      <div class="tab-bar mb-24">
+        <button class="tab-btn active" id="tab-list-btn" onclick="switchTab('list')">
+          <span style="display:flex;align-items:center;gap:6px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            All Courses
+          </span>
+        </button>
+        <button class="tab-btn" id="tab-assign-btn" onclick="switchTab('assign')">
+          <span style="display:flex;align-items:center;gap:6px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Assign Lecturer
+          </span>
+        </button>
+        <button class="tab-btn" id="tab-create-btn" onclick="switchTab('create')">
+          <span style="display:flex;align-items:center;gap:6px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            Create Course
+          </span>
+        </button>
+      </div>
+
+      <!-- ── ALL COURSES ── -->
+      <div id="section-list">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">All Courses</div>
+            <div class="search-field">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input id="course-search" type="text" placeholder="Search courses…" oninput="filterCourses()" />
+            </div>
+          </div>
+          <div id="courses-table"><div class="loading"><div class="spinner"></div> Loading courses…</div></div>
+          <div class="table-footer">
+            <span style="font-size:13px;color:var(--text-muted)" id="courses-count"></span>
+            <div class="pagination" id="courses-pagination"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ASSIGN LECTURER ── -->
+      <div id="section-assign" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start">
+          <!-- Left: searchable course list -->
+          <div class="panel" style="overflow:hidden">
+            <div class="panel-header">
+              <div class="panel-title">Select a Course</div>
+              <div class="search-field">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input id="assign-course-search" type="text" placeholder="Search by name or code…" oninput="filterAssignCourses()" />
+              </div>
+            </div>
+            <div id="assign-course-list" style="max-height:calc(100vh - 280px);overflow-y:auto"></div>
+          </div>
+          <!-- Right: sticky confirm card -->
+          <div style="position:sticky;top:80px">
+            <div class="create-form-card">
+              <div class="form-section-header" style="background:linear-gradient(135deg,#0d1424,#1e3a5f)">
+                <div class="form-section-icon" style="background:rgba(255,255,255,0.12)">
+                  <svg viewBox="0 0 24 24" style="stroke:#93c5fd"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </div>
+                <div>
+                  <div class="form-section-title" style="color:#fff">Assign Lecturer</div>
+                  <div class="form-section-sub" style="color:#93c5fd">Select a course then pick a lecturer</div>
+                </div>
+              </div>
+              <div class="panel-body" style="display:flex;flex-direction:column;gap:16px">
+                <div>
+                  <div class="assign-card-label" style="margin-bottom:6px">
+                    <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    Course
+                  </div>
+                  <div id="assign-selected-course" style="font-size:13px;color:var(--text-muted);padding:10px 12px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border)">
+                    ← Select a course from the list
+                  </div>
+                </div>
+                <div class="form-group" style="margin-bottom:0">
+                  <label class="form-label">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Lecturer
+                  </label>
+                  <select class="form-select" id="al-lecturer-tab"><option value="">— Select lecturer —</option></select>
+                </div>
+                <button class="btn btn-primary w-full" style="justify-content:center;padding:12px" onclick="assignLecturerTab()">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  Confirm Assignment
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <select id="al-course" style="display:none"></select>
+
+      <!-- ── CREATE COURSE ── -->
+      <div id="section-create" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start">
+
+          <!-- Left: info panel -->
+          <div class="panel" style="overflow:hidden">
+            <div class="panel-header">
+              <div class="panel-title">Course Details</div>
+            </div>
+            <div class="panel-body" style="display:flex;flex-direction:column;gap:16px">
+              <div class="form-row" style="gap:16px">
+                <div class="form-group" style="margin-bottom:0">
+                  <label class="form-label">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    Course Title
+                  </label>
+                  <input class="form-input" id="cc-name" type="text" placeholder="e.g. Advanced Machine Learning" oninput="updateCoursePreview()" />
+                </div>
+                <div class="form-group" style="margin-bottom:0;max-width:160px">
+                  <label class="form-label">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+                    Course Code
+                  </label>
+                  <input class="form-input" id="cc-code" type="text" placeholder="e.g. CS401" oninput="updateCoursePreview()" />
+                </div>
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  Description
+                </label>
+                <textarea class="form-textarea" id="cc-desc" placeholder="Describe the course content, goals and prerequisites…" style="min-height:130px" oninput="updateCoursePreview()"></textarea>
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  Assign Lecturer
+                  <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-light);margin-left:4px">(optional)</span>
+                </label>
+                <select class="form-select" id="cc-lecturer" onchange="updateCoursePreview()"><option value="">— Assign later —</option></select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: sticky preview + submit -->
+          <div style="position:sticky;top:80px">
+            <div class="create-form-card">
+              <div class="form-section-header" style="background:linear-gradient(135deg,#0d1424,#1e3a5f)">
+                <div class="form-section-icon" style="background:rgba(255,255,255,0.12)">
+                  <svg viewBox="0 0 24 24" style="stroke:#93c5fd"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                </div>
+                <div>
+                  <div class="form-section-title" style="color:#fff">New Course</div>
+                  <div class="form-section-sub" style="color:#93c5fd">Preview before creating</div>
+                </div>
+              </div>
+              <div class="panel-body" style="display:flex;flex-direction:column;gap:14px">
+                <!-- Live preview -->
+                <div id="cc-preview" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:10px">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div id="cc-prev-dot" style="width:10px;height:10px;border-radius:50%;background:var(--border);flex-shrink:0"></div>
+                    <div id="cc-prev-code" style="font-size:11px;font-weight:700;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:3px 8px">CODE</div>
+                  </div>
+                  <div id="cc-prev-name" style="font-size:15px;font-weight:700;color:var(--text-muted)">Course title will appear here</div>
+                  <div id="cc-prev-desc" style="font-size:12px;color:var(--text-light);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">Description will appear here…</div>
+                  <div style="display:flex;align-items:center;gap:6px;padding-top:4px;border-top:1px solid var(--border-light)">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span id="cc-prev-lec" style="font-size:11px;color:var(--text-muted)">No lecturer assigned</span>
+                  </div>
+                </div>
+                <button class="btn btn-primary w-full" style="justify-content:center;padding:12px" onclick="createCourse()">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                  Create Course
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="assign-modal">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <div class="modal-title">Assign Lecturer</div>
+      <button class="modal-close" onclick="document.getElementById('assign-modal').classList.remove('open')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Course</label>
+      <div id="modal-course-label" style="font-size:13px;font-weight:600;padding:8px 12px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border)"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Lecturer</label>
+      <select class="form-select" id="al-lecturer"><option value="">— Select lecturer —</option></select>
+    </div>
+    <button class="btn btn-primary w-full mt-8" style="justify-content:center" onclick="assignLecturer()">Confirm Assignment</button>
+  </div>
+</div>
+<div id="toast"></div>
+<script src="/app.js"></script>
+<script>
+  if (!requireRole('admin')) {}
+  renderSidebar('admin-courses');
+
+  let allCourses = [], filteredCourses = [], coursesPage = 1;
+  const PAGE_SIZE = 15;
+
+  const subjectColors = {
+    CS:'#2563eb',COMP:'#2563eb',IT:'#0369a1',
+    MATH:'#7c3aed',STAT:'#7c3aed',
+    BIO:'#16a34a',ENV:'#16a34a',
+    CHEM:'#0d9488',
+    PHYS:'#d97706',
+    ENG:'#dc2626',ENGL:'#dc2626',
+    DATA:'#0369a1',
+    DESIGN:'#be185d',ART:'#be185d',
+    NET:'#1e40af',
+    SEC:'#475569',
+    DEFAULT:'#64748b'
+  };
+  function subjectColor(code) {
+    if (!code) return subjectColors.DEFAULT;
+    const prefix = code.replace(/[0-9]/g,'').toUpperCase();
+    for (const k of Object.keys(subjectColors)) { if (prefix.startsWith(k)) return subjectColors[k]; }
+    return subjectColors.DEFAULT;
+  }
+  function lecturerAvatarColor(name) {
+    const colors = ['#2563eb','#7c3aed','#16a34a','#d97706','#0d9488','#dc2626'];
+    let h = 0; for (let c of (name||'A')) h = (h*31+c.charCodeAt(0))&0xffff;
+    return colors[h % colors.length];
+  }
+
+  function switchTab(tab) {
+    ['list','assign','create'].forEach(t => {
+      document.getElementById(`section-${t}`).style.display = t === tab ? '' : 'none';
+      document.getElementById(`tab-${t}-btn`).classList.toggle('active', t === tab);
+    });
+    if (tab === 'assign') renderAssignCourseList();
+  }
+
+  async function init() {
+    const [coursesRes, usersRes] = await Promise.all([api('/courses'), api('/users')]);
+    allCourses = coursesRes.ok ? coursesRes.data : [];
+    const q = document.getElementById('course-search').value.toLowerCase();
+    filteredCourses = q
+      ? allCourses.filter(c =>
+          c.ccode.toLowerCase().includes(q) || c.cname.toLowerCase().includes(q) ||
+          ((c.fname||'') + ' ' + (c.lname||'')).toLowerCase().includes(q))
+      : allCourses;
+    const lecturers = (usersRes.ok ? usersRes.data : []).filter(u => u.role === 'lecturer');
+
+    resetSelect('al-lecturer',     '— Select lecturer —');
+    resetSelect('al-lecturer-tab', '— Select lecturer —');
+    resetSelect('cc-lecturer',     '— Assign later —');
+    resetSelect('al-course', null);
+
+    populateLecturerSelect('al-lecturer', lecturers);
+    populateLecturerSelect('al-lecturer-tab', lecturers);
+    populateLecturerSelect('cc-lecturer', lecturers);
+
+    allCourses.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.courseID;
+      o.textContent = `${c.ccode} — ${c.cname}`;
+      document.getElementById('al-course').appendChild(o);
+    });
+
+    renderCoursesPage();
+    if (document.getElementById('section-assign').style.display !== 'none') renderAssignCourseList();
+    const hash = window.location.hash;
+    if (hash === '#create') switchTab('create');
+    else if (hash === '#assign') switchTab('assign');
+  }
+
+  function resetSelect(id, placeholder) {
+    const el = document.getElementById(id);
+    el.innerHTML = placeholder ? `<option value="">${placeholder}</option>` : '';
+  }
+
+  function populateLecturerSelect(id, lecturers) {
+    lecturers.forEach(u => {
+      const o = document.createElement('option');
+      o.value = u.userID;
+      o.textContent = `${u.fname} ${u.lname} (${u.username})`;
+      document.getElementById(id).appendChild(o);
+    });
+  }
+
+  let assignFilteredCourses = [];
+
+  function renderAssignCourseList() {
+    const q = (document.getElementById('assign-course-search')?.value || '').toLowerCase().trim();
+    assignFilteredCourses = q
+      ? allCourses.filter(c =>
+          (c.ccode||'').toLowerCase().includes(q) ||
+          (c.cname||'').toLowerCase().includes(q) ||
+          ((c.fname||'') + ' ' + (c.lname||'')).toLowerCase().includes(q))
+      : allCourses;
+    const list = document.getElementById('assign-course-list');
+    if (!list) return;
+    if (!assignFilteredCourses.length) {
+      list.innerHTML = '<div class="empty-state" style="padding:24px"><p>No courses match</p></div>';
+      return;
+    }
+    const selectedID = document.getElementById('al-course').value;
+    list.innerHTML = assignFilteredCourses.map(c => `
+      <div class="assign-course-row${c.courseID == selectedID ? ' selected' : ''}" onclick="selectAssignCourse(${c.courseID}, '${(c.ccode||'').replace(/'/g,"\\'")}', '${(c.cname||'').replace(/'/g,"\\'")}', '${c.fname ? (c.fname+' '+(c.lname||'')).trim().replace(/'/g,"\\'") : ''}')">
+        <span class="assign-course-code">${c.ccode}</span>
+        <span class="assign-course-name">${c.cname}</span>
+        <span class="assign-course-lec">${c.fname ? c.fname+' '+c.lname : '<span style="color:var(--amber)">Unassigned</span>'}</span>
+      </div>`).join('');
+  }
+
+  function filterAssignCourses() { renderAssignCourseList(); }
+
+  function selectAssignCourse(id, code, name, lecturer) {
+    document.getElementById('al-course').value = id;
+    document.getElementById('assign-selected-course').innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="width:8px;height:8px;border-radius:50%;background:${subjectColor(code)};flex-shrink:0"></span>
+        <div>
+          <div style="font-weight:700;color:var(--text);font-size:13px">${code} — ${name}</div>
+          ${lecturer ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px">Current: ${lecturer}</div>` : `<div style="font-size:11px;color:var(--amber);margin-top:2px">Currently unassigned</div>`}
+        </div>
+      </div>`;
+    renderAssignCourseList();
+  }
+
+  function filterCourses() {
+    const q = document.getElementById('course-search').value.toLowerCase().trim();
+    filteredCourses = q
+      ? allCourses.filter(c =>
+          (c.ccode||'').toLowerCase().includes(q) ||
+          (c.cname||'').toLowerCase().includes(q) ||
+          ((c.fname||'') + ' ' + (c.lname||'')).toLowerCase().includes(q))
+      : allCourses;
+    coursesPage = 1; renderCoursesPage();
+  }
+
+  function renderCoursesPage() {
+    const start = (coursesPage-1)*PAGE_SIZE, slice = filteredCourses.slice(start, start+PAGE_SIZE), total = filteredCourses.length;
+    document.getElementById('courses-count').textContent = total === 0 ? 'No courses found' : `Showing ${start+1}–${Math.min(start+PAGE_SIZE,total)} of ${total.toLocaleString()}`;
+    if (!slice.length) {
+      document.getElementById('courses-table').innerHTML = `
+        <div class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <p>No courses match your search</p>
+        </div>`;
+      return;
+    }
+    document.getElementById('courses-table').innerHTML = `
+      <table>
+        <thead><tr><th>Code</th><th>Course</th><th>Lecturer</th><th></th></tr></thead>
+        <tbody>${slice.map(c => {
+          const color = subjectColor(c.ccode);
+          const hasLecturer = c.fname;
+          const lecInitials = hasLecturer ? (c.fname[0]+(c.lname||'')[0]).toUpperCase() : '';
+          const lecColor = lecturerAvatarColor(c.fname);
+          return `<tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;display:inline-block"></span>
+                <span class="badge badge-blue" style="font-size:10px;font-weight:700">${c.ccode}</span>
+              </div>
+            </td>
+            <td style="font-weight:500">${c.cname}</td>
+            <td>
+              ${hasLecturer
+                ? `<div style="display:flex;align-items:center;gap:7px">
+                     <div class="mini-avatar" style="background:${lecColor}">${lecInitials}</div>
+                     <span>${c.fname} ${c.lname}</span>
+                   </div>`
+                : `<span class="badge badge-amber">Unassigned</span>`}
+            </td>
+            <td style="white-space:nowrap">
+              <button class="btn btn-ghost btn-sm" onclick="viewCourse(${c.courseID})" style="margin-right:4px">View</button>
+              <button class="btn btn-outline btn-sm" onclick="openAssignModal(${c.courseID}, '${(c.ccode||'').replace(/'/g,"\\'")} — ${(c.cname||'').replace(/'/g,"\\'")}')">Assign</button>
+            </td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`;
+    renderPagination('courses-pagination', coursesPage, Math.ceil(total/PAGE_SIZE), p => { coursesPage=p; renderCoursesPage(); });
+  }
+
+  function renderPagination(elId, page, pages, goFn) {
+    if (pages <= 1) { document.getElementById(elId).innerHTML = ''; return; }
+    const start = Math.max(1, page-2), end = Math.min(pages, page+2);
+    document.getElementById(elId).innerHTML =
+      `<button class="page-btn text" onclick="(${goFn.toString()})(${page-1})" ${page===1?'disabled':''}>Prev</button>` +
+      (start>1?`<button class="page-btn" onclick="(${goFn.toString()})(1)">1</button>${start>2?'<span style="padding:0 4px">…</span>':''}` : '') +
+      Array.from({length:end-start+1},(_,i)=>start+i).map(p=>`<button class="page-btn ${p===page?'active':''}" onclick="(${goFn.toString()})(${p})">${p}</button>`).join('') +
+      (end<pages?`${end<pages-1?'<span style="padding:0 4px">…</span>':''}<button class="page-btn" onclick="(${goFn.toString()})(${pages})">${pages}</button>` : '') +
+      `<button class="page-btn text" onclick="(${goFn.toString()})(${page+1})" ${page===pages?'disabled':''}>Next</button>`;
+  }
+
+  function openAssignModal(courseID, courseLabel) {
+    document.getElementById('al-course').value = courseID;
+    document.getElementById('modal-course-label').textContent = courseLabel;
+    document.getElementById('al-lecturer').value = '';
+    document.getElementById('assign-modal').classList.add('open');
+  }
+
+  async function assignLecturer() {
+    const courseID   = document.getElementById('al-course').value;
+    const lecturerID = document.getElementById('al-lecturer').value;
+    if (!lecturerID) return toast('Please select a lecturer', 'error');
+    const r = await api(`/courses/${courseID}/assign-lecturer`, { method: 'POST', body: JSON.stringify({ lecturerID: parseInt(lecturerID) }) });
+    toast(r.data?.message || (r.ok ? 'Lecturer assigned!' : 'Failed'), r.ok ? 'success' : 'error');
+    if (r.ok) { document.getElementById('assign-modal').classList.remove('open'); allCourses = []; await init(); }
+  }
+
+  async function assignLecturerTab() {
+    const courseID   = document.getElementById('al-course').value;
+    const lecturerID = document.getElementById('al-lecturer-tab').value;
+    if (!courseID)   return toast('Please select a course first', 'error');
+    if (!lecturerID) return toast('Please select a lecturer', 'error');
+    const r = await api(`/courses/${courseID}/assign-lecturer`, { method: 'POST', body: JSON.stringify({ lecturerID: parseInt(lecturerID) }) });
+    toast(r.data?.message || (r.ok ? 'Lecturer assigned!' : 'Failed'), r.ok ? 'success' : 'error');
+    if (r.ok) {
+      document.getElementById('al-course').value = '';
+      document.getElementById('al-lecturer-tab').value = '';
+      document.getElementById('assign-selected-course').innerHTML = '← Select a course from the list';
+      allCourses = []; await init();
+      renderAssignCourseList();
+    }
+  }
+
+  function updateCoursePreview() {
+    const code = document.getElementById('cc-code').value.trim() || 'CODE';
+    const name = document.getElementById('cc-name').value.trim() || 'Course title will appear here';
+    const desc = document.getElementById('cc-desc').value.trim() || 'Description will appear here…';
+    const lecSel = document.getElementById('cc-lecturer');
+    const lecText = lecSel.value ? lecSel.options[lecSel.selectedIndex].text : 'No lecturer assigned';
+    const color = subjectColor(code);
+    document.getElementById('cc-prev-dot').style.background = color;
+    document.getElementById('cc-prev-code').textContent = code;
+    document.getElementById('cc-prev-code').style.borderColor = color + '55';
+    document.getElementById('cc-prev-code').style.color = color;
+    document.getElementById('cc-prev-name').textContent = name;
+    document.getElementById('cc-prev-name').style.color = name === 'Course title will appear here' ? 'var(--text-muted)' : 'var(--text)';
+    document.getElementById('cc-prev-desc').textContent = desc;
+    document.getElementById('cc-prev-desc').style.color = desc === 'Description will appear here…' ? 'var(--text-light)' : 'var(--text-muted)';
+    document.getElementById('cc-prev-lec').textContent = lecText;
+    document.getElementById('cc-prev-lec').style.color = lecSel.value ? 'var(--text)' : 'var(--text-muted)';
+  }
+
+  async function createCourse() {
+    const ccode = document.getElementById('cc-code').value.trim();
+    const cname = document.getElementById('cc-name').value.trim();
+    const description = document.getElementById('cc-desc').value.trim();
+    const lecturerID  = document.getElementById('cc-lecturer').value;
+    if (!ccode || !cname) return toast('Course code and name required', 'error');
+    const body = { ccode, cname, description };
+    if (lecturerID) body.lecturerID = parseInt(lecturerID);
+    const r = await api('/courses', { method: 'POST', body: JSON.stringify(body) });
+    toast(r.data?.message || (r.ok ? 'Course created!' : 'Failed'), r.ok ? 'success' : 'error');
+    if (r.ok) {
+      document.getElementById('cc-code').value = '';
+      document.getElementById('cc-name').value = '';
+      document.getElementById('cc-desc').value = '';
+      document.getElementById('cc-lecturer').value = '';
+      updateCoursePreview();
+      allCourses = []; init();
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>

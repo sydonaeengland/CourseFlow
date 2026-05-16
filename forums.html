@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CourseFlow — Forums</title>
+<link rel="stylesheet" href="/styles.css" />
+<style>
+  .forum-hero {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 24px;
+    position: relative;
+    min-height: 150px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 28px 32px 0;
+  }
+  .forum-hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(160deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 100%);
+    pointer-events: none; z-index: 0;
+  }
+  .forum-hero-watermark {
+    position: absolute; right: -8px; top: 50%; transform: translateY(-50%);
+    opacity: 0.07; width: 160px; height: 160px; color: #fff; z-index: 0;
+  }
+  .forum-hero-watermark svg { width: 100%; height: 100%; stroke: currentColor; }
+  .forum-hero-badge {
+    display: inline-flex; align-items: center;
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+    backdrop-filter: blur(8px);
+    border-radius: 20px; padding: 3px 12px;
+    font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 0.05em; text-transform: uppercase;
+    margin-bottom: 10px; position: relative; z-index: 1; width: fit-content;
+  }
+  .forum-hero-title {
+    font-size: 24px; font-weight: 800; color: #fff; line-height: 1.2;
+    position: relative; z-index: 1; text-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  }
+  .forum-hero-strip {
+    display: flex; align-items: stretch;
+    margin: 18px -32px 0;
+    border-top: 1px solid rgba(255,255,255,0.12);
+    background: rgba(0,0,0,0.2); backdrop-filter: blur(6px);
+    position: relative; z-index: 1;
+  }
+  .forum-hero-stat {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    padding: 12px 16px;
+    border-right: 1px solid rgba(255,255,255,0.1);
+  }
+  .forum-hero-stat:last-child { border-right: none; }
+  .forum-hero-stat-val { font-size: 18px; font-weight: 800; color: #fff; line-height: 1; }
+  .forum-hero-stat-lbl { font-size: 10px; color: rgba(255,255,255,0.55); margin-top: 3px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+  #forums-area.three-col {
+    display: grid !important;
+    grid-template-columns: 200px 1fr 260px;
+    gap: 20px;
+    align-items: start;
+  }
+  .forum-left-nav {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    position: sticky;
+    top: 20px;
+  }
+  .forum-left-nav-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px 10px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .forum-left-nav-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 10px 14px; width: 100%; text-align: left;
+    border: none; background: none; cursor: pointer;
+    font-size: 13px; font-weight: 500; color: var(--text-muted);
+    transition: background 0.13s, color 0.13s;
+    border-bottom: 1px solid var(--border);
+  }
+  .forum-left-nav-item:last-child { border-bottom: none; }
+  .forum-left-nav-item:hover { background: var(--surface-hover); color: var(--text); }
+  .forum-left-nav-item.active { background: #eff6ff; color: var(--primary); font-weight: 600; }
+  .forum-left-nav-item .flnav-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: currentColor; flex-shrink: 0; opacity: 0.5;
+  }
+  .forum-left-nav-item.active .flnav-dot { opacity: 1; }
+  .forum-left-nav-item .flnav-label {
+    flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .forum-nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: 8px; cursor: pointer;
+    font-size: 13px; font-weight: 500; color: var(--text-muted);
+    transition: background 0.13s, color 0.13s;
+    border: none; background: none; width: 100%; text-align: left;
+  }
+  .forum-nav-item:hover { background: var(--surface-hover); color: var(--text); }
+  .forum-nav-item.active { background: var(--primary-light, #eff6ff); color: var(--primary); font-weight: 600; }
+  .forum-nav-item .fnav-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex-shrink: 0; opacity: 0.5;
+  }
+  .forum-nav-item.active .fnav-dot { opacity: 1; }
+  .forum-nav-item .fnav-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 600; color: var(--text-muted);
+    text-decoration: none; margin-bottom: 16px; transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--text); }
+  .back-link svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; }
+
+  /* ── FORUM ROWS (matches course.html style) ── */
+  .forum-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer; transition: background 0.12s;
+    text-decoration: none;
+    background: var(--surface);
+  }
+  .forum-row:first-child { border-radius: var(--radius) var(--radius) 0 0; }
+  .forum-row:last-child { border-bottom: none; border-radius: 0 0 var(--radius) var(--radius); }
+  .forum-row:only-child { border-radius: var(--radius); }
+  .forum-row:hover { background: var(--border-light); }
+  .forum-icon {
+    width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+    background: var(--blue-light);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .forum-icon svg { width: 16px; height: 16px; stroke: var(--blue); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .forum-info { flex: 1; min-width: 0; }
+  .forum-title { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .forum-date { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .forum-arrow { color: var(--text-light); }
+  .forum-arrow svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+  /* ── FORUMS LIST PANEL ── */
+  #threads-list .forum-row { border: 1px solid var(--border); border-bottom: none; }
+  #threads-list .forum-row:last-child { border-bottom: 1px solid var(--border); }
+
+  /* ── THREAD CARDS (redesigned) ── */
+  .thread-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 10px;
+    transition: box-shadow 0.15s;
+  }
+  .thread-card:hover { box-shadow: var(--shadow-sm); }
+  .thread-meta {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+  }
+  .thread-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--blue-light); color: var(--blue);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+  .thread-meta-info { flex: 1; min-width: 0; }
+  .thread-author-name { font-size: 13px; font-weight: 700; color: var(--text); }
+  .thread-timestamp { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+  .thread-title {
+    font-size: 15px; font-weight: 700; color: var(--text);
+    margin-bottom: 6px; line-height: 1.3;
+  }
+  .thread-body {
+    font-size: 13px; color: var(--text-muted); line-height: 1.6;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .thread-actions {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 14px; padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .thread-action-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); font-size: 12px; font-weight: 600;
+    padding: 5px 10px; border-radius: 6px;
+    transition: background 0.12s, color 0.12s;
+  }
+  .thread-action-btn:hover { background: var(--border-light); color: var(--text); }
+  .thread-action-btn.danger:hover { background: rgba(239,68,68,0.08); color: #ef4444; }
+  .thread-action-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .reply-area {
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .reply-bubble {
+    display: flex; gap: 10px; align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  .reply-avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--surface-hover); color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; flex-shrink: 0;
+  }
+  .reply-content {
+    flex: 1; background: var(--border-light);
+    border-radius: 10px; padding: 8px 12px;
+  }
+  .reply-content-header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 3px;
+  }
+  .reply-author { font-size: 12px; font-weight: 700; color: var(--text); }
+  .reply-time { font-size: 11px; color: var(--text-muted); }
+  .reply-body-text { font-size: 13px; color: var(--text); line-height: 1.5; }
+  .reply-mini-actions {
+    display: flex; gap: 4px; margin-top: 5px;
+  }
+  .reply-mini-btn {
+    display: inline-flex; align-items: center; gap: 3px;
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); font-size: 11px; font-weight: 600;
+    padding: 3px 6px; border-radius: 5px; transition: background 0.12s, color 0.12s;
+  }
+  .reply-mini-btn:hover { background: var(--border); color: var(--text); }
+  .reply-mini-btn.danger:hover { background: rgba(239,68,68,0.08); color: #ef4444; }
+  .reply-mini-btn svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; }
+  /* Composer inside thread view */
+  .thread-composer-inline {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius); padding: 16px 18px;
+    margin-bottom: 16px;
+  }
+  .thread-composer-inline:focus-within { border-color: var(--blue); }
+  .composer-row { display: flex; gap: 10px; align-items: flex-start; }
+  .composer-fields { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+
+  /* ── COURSE PICKER EMPTY STATE ── */
+  .picker-hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 56px 32px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; gap: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .picker-hero-icon {
+    width: 64px; height: 64px; border-radius: 18px;
+    background: var(--blue-light);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .picker-hero-icon svg { width: 30px; height: 30px; stroke: var(--blue); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .picker-hero-title { font-size: 18px; font-weight: 800; color: var(--text); }
+  .picker-hero-sub { font-size: 13px; color: var(--text-muted); max-width: 320px; line-height: 1.6; }
+  .picker-hero-select {
+    width: 100%; max-width: 380px;
+    padding: 12px 16px; font-size: 14px; font-weight: 500;
+    border: 1.5px solid var(--border); border-radius: var(--radius);
+    background: var(--bg); color: var(--text);
+    outline: none; cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .picker-hero-select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
+
+  /* ── ACTIVE HEADER BAR ── */
+  .active-bar {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 20px;
+  }
+  .active-bar-back {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border); background: var(--surface);
+    font-size: 13px; font-weight: 600; color: var(--text-muted);
+    cursor: pointer; text-decoration: none; transition: all 0.13s;
+  }
+  .active-bar-back:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-light); }
+  .active-bar-back svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; }
+  .active-bar-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .active-bar-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+  .active-bar-actions { display: flex; gap: 8px; align-items: center; margin-left: auto; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title">Academic Forums</div>
+        <div class="topbar-sub">Discuss, ask questions, share insights</div>
+      </div>
+      <div class="topbar-right">
+        <span class="role-chip" id="tb-role-chip"></span>
+        <a class="topbar-avatar-btn" href="/profile.html">
+          <div class="user-avatar" id="tb-avatar">?</div>
+          <span id="tb-username"></span>
+        </a>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- Empty state: pick a course (hidden when coming from ?forumID=) -->
+      <div id="picker-state">
+        <div class="picker-hero">
+          <div class="picker-hero-icon">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div>
+            <div class="picker-hero-title">Academic Forums</div>
+            <div class="picker-hero-sub">Pick a course to see its discussion forums, ask questions, and share insights with classmates.</div>
+          </div>
+          <select class="picker-hero-select" id="forum-course-select" onchange="onCourseSelect()">
+            <option value="">— Select a course —</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Active state: forums list for a selected course -->
+      <div id="active-state" style="display:none">
+        <div class="active-bar">
+          <button class="active-bar-back" onclick="resetToPickerState()">
+            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+            Back
+          </button>
+          <div>
+            <div class="active-bar-title" id="active-bar-title">Forums</div>
+            <div class="active-bar-sub" id="active-bar-sub"></div>
+          </div>
+          <div class="active-bar-actions">
+            <button class="btn btn-outline btn-sm lecturer-only" style="display:none" onclick="showCreateForumModal()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              New Forum
+            </button>
+          </div>
+        </div>
+
+        <!-- Forum list view -->
+        <div id="forums-list-view">
+          <div id="threads-list">
+            <div class="empty-state"><p>Select a course to view forums</p></div>
+          </div>
+        </div>
+
+        <!-- Thread view (when a forum is selected) -->
+        <div id="forum-thread-view" style="display:none">
+          <div class="active-bar" style="margin-top:0">
+            <button class="active-bar-back" onclick="backToForumsList()">
+              <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+              All Forums
+            </button>
+            <div>
+              <div class="active-bar-title" id="thread-view-title">Forum</div>
+              <div class="active-bar-sub" id="thread-view-sub"></div>
+            </div>
+          </div>
+
+          <div class="thread-composer-inline" id="composer-area" style="display:none">
+            <div class="composer-row">
+              <div class="thread-avatar" id="composer-avatar">?</div>
+              <div class="composer-fields">
+                <input class="form-input" id="new-thread-title" type="text" placeholder="Thread title…" style="font-size:13px" />
+                <textarea class="form-input" id="new-thread-body" placeholder="Share something with your classmates…" rows="3" style="resize:vertical;font-family:inherit;font-size:13px;line-height:1.5"></textarea>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span class="tag" id="tag-question" onclick="toggleTag('question')" style="cursor:pointer">question</span>
+                  <span class="tag" id="tag-discussion" onclick="toggleTag('discussion')" style="cursor:pointer">discussion</span>
+                  <span class="tag" id="tag-help" onclick="toggleTag('help')" style="cursor:pointer">help</span>
+                  <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="postThread()">Post Thread</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="thread-cards-list"></div>
+        </div>
+      </div>
+
+      <!-- Direct forum view (from ?forumID= link) -->
+      <div id="direct-forum-state" style="display:none">
+        <div class="thread-composer" id="composer-area-direct" style="display:none;margin-bottom:16px">
+          <div style="margin-bottom:10px">
+            <input class="form-input" id="new-thread-title-direct" type="text" placeholder="Thread title…" style="font-size:13px;padding:8px 12px" />
+          </div>
+          <div class="composer-top">
+            <div class="user-avatar" style="width:36px;height:36px;flex-shrink:0" id="composer-avatar-direct">?</div>
+            <textarea class="composer-input" id="new-thread-body-direct" placeholder="Share something with your classmates…" rows="2"></textarea>
+          </div>
+          <div class="composer-actions">
+            <div class="tag-row">
+              <span class="tag" id="tag-question-direct" onclick="toggleTag('question')" style="cursor:pointer">question</span>
+              <span class="tag" id="tag-discussion-direct" onclick="toggleTag('discussion')" style="cursor:pointer">discussion</span>
+              <span class="tag" id="tag-help-direct" onclick="toggleTag('help')" style="cursor:pointer">help</span>
+              <button class="btn btn-primary btn-sm" onclick="postThread()">Post</button>
+            </div>
+          </div>
+        </div>
+        <div id="threads-list-direct"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="create-forum-modal">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <div class="modal-title">Create New Forum</div>
+      <button class="modal-close" onclick="closeModal('create-forum-modal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Forum Title</label>
+      <input class="form-input" id="new-forum-title" type="text" placeholder="e.g. Week 3 Discussion" />
+    </div>
+    <button class="btn btn-primary w-full mt-8" style="justify-content:center" onclick="createForum()">Create Forum</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="/app.js"></script>
+<script>
+  if (!requireAuth()) {}
+  renderSidebar('forums');
+
+  if (CF.user?.role === 'lecturer' || CF.user?.role === 'admin') {
+    document.querySelectorAll('.lecturer-only').forEach(el => el.style.display = '');
+  }
+
+  document.getElementById('composer-avatar').textContent = (CF.user?.username || '?')[0].toUpperCase();
+  document.getElementById('composer-avatar-direct').textContent = (CF.user?.username || '?')[0].toUpperCase();
+  const canPost = CF.user?.role === 'student' || CF.user?.role === 'lecturer';
+
+  let activeForum = null, activeCourseID = null, allThreads = [], selectedTags = new Set();
+  let _activeForumTitle = '';
+
+  async function init() {
+    const params = new URLSearchParams(window.location.search);
+    const fid = params.get('forumID');
+
+    if (fid) {
+      // coming from course page — skip picker, go straight to forum
+      document.getElementById('picker-state').style.display = 'none';
+      document.getElementById('direct-forum-state').style.display = '';
+      document.getElementById('threads-list-direct').innerHTML = '<div class="loading"><div class="spinner"></div> Loading…</div>';
+
+      const [fr, threadRes] = await Promise.all([
+        api(`/forums/${fid}`),
+        api(`/forums/${fid}/threads`),
+      ]);
+
+      if (fr.ok) {
+        const forum = fr.data;
+        activeForum = parseInt(fid);
+        document.querySelector('.topbar-title').textContent = forum.ccode + ' — ' + forum.title;
+        document.querySelector('.topbar-sub').textContent = forum.cname;
+
+        const sub = classifyCourse(forum.cname, forum.ccode);
+        const threadCount = (threadRes.ok ? threadRes.data : []).length;
+
+        const heroHTML = `
+          <a href="/course.html?id=${forum.courseID}" class="back-link" style="margin-bottom:12px">
+            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to course
+          </a>
+          <div class="forum-hero ${sub.cls}">
+            <div class="forum-hero-watermark">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.2">${sub.icon}</svg>
+            </div>
+            <span class="forum-hero-badge">${sub.label}</span>
+            <div class="forum-hero-title" id="hero-forum-title">${forum.ccode} — ${forum.title}</div>
+            <div class="forum-hero-strip">
+              <div class="forum-hero-stat">
+                <span class="forum-hero-stat-val" id="hero-thread-count">${threadCount}</span>
+                <span class="forum-hero-stat-lbl">Threads</span>
+              </div>
+              <div class="forum-hero-stat">
+                <span class="forum-hero-stat-val">${forum.ccode}</span>
+                <span class="forum-hero-stat-lbl">Course</span>
+              </div>
+              <div class="forum-hero-stat">
+                <span class="forum-hero-stat-val">${forum.cname.split(' ').slice(0,2).join(' ')}</span>
+                <span class="forum-hero-stat-lbl">Subject</span>
+              </div>
+            </div>
+          </div>`;
+
+        document.querySelector('.page-content').insertAdjacentHTML('afterbegin', heroHTML);
+        if (canPost) document.getElementById('composer-area-direct').style.display = '';
+        allThreads = threadRes.ok ? threadRes.data : [];
+        renderThreadsDirect();
+      }
+    } else {
+      // normal forums page — populate course picker
+      let courses = [];
+      if (CF.user?.role === 'student') {
+        const rm = await api(`/courses/student/${CF.user.userID}`);
+        courses = rm.ok ? rm.data : [];
+      } else {
+        const rc = await api('/courses');
+        courses = rc.ok ? rc.data : [];
+      }
+      CF.courses = courses;
+      const sel = document.getElementById('forum-course-select');
+      sel.innerHTML = '<option value="">— Select a course —</option>' +
+        courses.map(c => `<option value="${c.courseID}">${c.ccode} — ${c.cname}</option>`).join('');
+    }
+  }
+
+  function onCourseSelect() {
+    const courseID = document.getElementById('forum-course-select').value;
+    if (!courseID) return;
+    activeCourseID = courseID;
+    const course = (CF.courses || []).find(c => String(c.courseID) === String(courseID));
+    document.getElementById('active-bar-title').textContent = course ? `${course.ccode} — ${course.cname}` : 'Forums';
+    document.getElementById('active-bar-sub').textContent = 'Select a forum to view threads';
+    document.getElementById('picker-state').style.display = 'none';
+    document.getElementById('active-state').style.display = '';
+    document.getElementById('forum-thread-view').style.display = 'none';
+    document.getElementById('forums-list-view').style.display = '';
+    loadForums(courseID);
+  }
+
+  function resetToPickerState() {
+    document.getElementById('active-state').style.display = 'none';
+    document.getElementById('picker-state').style.display = '';
+    document.getElementById('forum-course-select').value = '';
+    activeCourseID = null;
+    activeForum = null;
+  }
+
+  function backToForumsList() {
+    document.getElementById('forum-thread-view').style.display = 'none';
+    document.getElementById('forums-list-view').style.display = '';
+    document.getElementById('active-bar-sub').textContent = 'Select a forum to view threads';
+    activeForum = null;
+  }
+
+  async function loadForums(courseID) {
+    const el = document.getElementById('threads-list');
+    el.innerHTML = '<div class="loading"><div class="spinner"></div> Loading…</div>';
+    const r = await api(`/courses/${courseID}/forums`);
+    if (!r.ok || !r.data.length) {
+      el.innerHTML = '<div class="empty-state"><p>No forums for this course yet</p></div>';
+      return;
+    }
+    el.innerHTML = r.data.map(f => {
+      const date = new Date(f.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      return `
+      <a class="forum-row" href="#" data-fid="${f.forumID}">
+        <div class="forum-icon">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="forum-info">
+          <div class="forum-title">${f.title}</div>
+          <div class="forum-date">${date}</div>
+        </div>
+        <div class="forum-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </a>`;
+    }).join('');
+    el.querySelectorAll('.forum-row[data-fid]').forEach(row => {
+      row.addEventListener('click', e => { e.preventDefault(); selectForum(parseInt(row.dataset.fid), row.querySelector('.forum-title').textContent); });
+    });
+  }
+
+  async function selectForum(forumID, title) {
+    activeForum = forumID;
+    _activeForumTitle = title;
+    document.getElementById('thread-view-title').textContent = title;
+    document.getElementById('thread-view-sub').textContent = 'Discussion threads';
+    document.getElementById('forums-list-view').style.display = 'none';
+    document.getElementById('forum-thread-view').style.display = '';
+    document.getElementById('active-bar-sub').textContent = title;
+    // set composer avatar
+    const av = document.getElementById('composer-avatar');
+    if (av) av.textContent = (CF.user?.fname || CF.user?.username || '?')[0].toUpperCase();
+    if (canPost) document.getElementById('composer-area').style.display = '';
+    await loadThreads(forumID);
+  }
+
+  async function loadThreads(forumID) {
+    document.getElementById('thread-cards-list').innerHTML = '<div class="loading"><div class="spinner"></div> Loading…</div>';
+    const r = await api(`/forums/${forumID}/threads`);
+    allThreads = r.ok ? r.data : [];
+    renderThreads();
+  }
+
+  function renderThreads() {
+    const el = document.getElementById('thread-cards-list');
+    if (!allThreads.length) { el.innerHTML = '<div class="empty-state"><p>No threads yet — be the first to post!</p></div>'; return; }
+    el.innerHTML = allThreads.map(t => threadCardHTML(t)).join('');
+  }
+
+  function renderThreadsDirect() {
+    const el = document.getElementById('threads-list-direct');
+    if (!allThreads.length) { el.innerHTML = '<div class="empty-state"><p>No threads yet — be the first to post!</p></div>'; return; }
+    el.innerHTML = allThreads.map(t => threadCardHTMLDirect(t)).join('');
+  }
+
+  function threadCardHTML(t) {
+    const date = new Date(t.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const author = t.fname ? t.fname + (t.lname ? ' ' + t.lname : '') : t.username || 'User';
+    const initials = (t.fname || t.username || 'U')[0].toUpperCase();
+    const isOwner = CF.user?.userID === t.userID || CF.user?.role === 'admin';
+    return `
+    <div class="thread-card" id="thread-${t.threadID}">
+      <div class="thread-meta">
+        <div class="thread-avatar">${initials}</div>
+        <div class="thread-meta-info">
+          <div class="thread-author-name">${author}</div>
+          <div class="thread-timestamp">${date}</div>
+        </div>
+      </div>
+      <div class="thread-title">${t.title}</div>
+      <div class="thread-body">${t.body}</div>
+      <div class="thread-actions">
+        <button class="thread-action-btn" onclick="toggleReplies(${t.threadID})">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Reply
+        </button>
+        ${isOwner ? `<button class="thread-action-btn danger" onclick="deleteThread(${t.threadID})">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          Delete
+        </button>` : ''}
+      </div>
+      <div id="replies-area-${t.threadID}" style="display:none" class="reply-area"></div>
+    </div>`;
+  }
+
+  function threadCardHTMLDirect(t) { return threadCardHTML(t); }
+
+  async function toggleReplies(threadID) {
+    const area = document.getElementById('replies-area-' + threadID);
+    if (area.style.display !== 'none') { area.style.display = 'none'; return; }
+    area.style.display = '';
+    area.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:6px 0">Loading…</div>';
+    const r = await api(`/threads/${threadID}/replies`);
+    renderReplies(threadID, r.ok ? r.data : []);
+  }
+
+  function renderReplies(threadID, replies) {
+    const area = document.getElementById('replies-area-' + threadID);
+    const topLevel = replies.filter(r => !r.parentID);
+    const byParent = {};
+    replies.forEach(r => { if (r.parentID) { (byParent[r.parentID] = byParent[r.parentID] || []).push(r); } });
+
+    function replyHTML(rep, depth = 0) {
+      const indent = depth > 0 ? `margin-left:${Math.min(depth, 4) * 20}px` : '';
+      const date = new Date(rep.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const author = rep.fname ? rep.fname + (rep.lname ? ' ' + rep.lname : '') : rep.username || 'User';
+      const initials = (rep.fname || rep.username || '?')[0].toUpperCase();
+      const isOwner = CF.user?.userID === rep.userID || CF.user?.role === 'admin';
+      const children = (byParent[rep.replyID] || []).map(c => replyHTML(c, depth + 1)).join('');
+      return `<div style="${indent};margin-bottom:8px">
+        <div class="reply-bubble">
+          <div class="reply-avatar">${initials}</div>
+          <div class="reply-content">
+            <div class="reply-content-header">
+              <span class="reply-author">${author}</span>
+              <span class="reply-time">${date}</span>
+            </div>
+            <div class="reply-body-text">${rep.body}</div>
+            <div class="reply-mini-actions">
+              <button class="reply-mini-btn" onclick="openReplyBox(${threadID}, ${rep.replyID})">
+                <svg viewBox="0 0 24 24"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
+                Reply
+              </button>
+              ${isOwner ? `<button class="reply-mini-btn danger" onclick="deleteReply(${rep.replyID}, ${threadID})">
+                <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                Delete
+              </button>` : ''}
+            </div>
+          </div>
+        </div>
+        ${children}
+      </div>`;
+    }
+
+    const myInitials = (CF.user?.fname || CF.user?.username || '?')[0].toUpperCase();
+    const repliesHTML = topLevel.map(r => replyHTML(r)).join('') ||
+      '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">No replies yet.</div>';
+
+    area.innerHTML = repliesHTML + `
+      <div id="reply-box-${threadID}">
+        <div class="reply-bubble">
+          <div class="reply-avatar">${myInitials}</div>
+          <div style="flex:1">
+            <textarea id="reply-input-${threadID}" placeholder="Write a reply…" rows="2"
+              class="form-input" style="font-family:inherit;font-size:13px;resize:vertical;line-height:1.5"></textarea>
+            <input type="hidden" id="reply-parent-${threadID}" value="" />
+            <div style="display:flex;gap:8px;margin-top:6px">
+              <button onclick="postReply(${threadID})" class="btn btn-primary btn-sm">Post Reply</button>
+              <button onclick="closeReplyBox(${threadID})" class="btn btn-outline btn-sm">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function openReplyBox(threadID, parentID) {
+    const parentInput = document.getElementById('reply-parent-' + threadID);
+    if (parentInput) { parentInput.value = parentID; }
+    const ta = document.getElementById('reply-input-' + threadID);
+    if (ta) ta.focus();
+  }
+
+  function closeReplyBox(threadID) {
+    const ta = document.getElementById('reply-input-' + threadID);
+    if (ta) ta.value = '';
+    const pi = document.getElementById('reply-parent-' + threadID);
+    if (pi) pi.value = '';
+  }
+
+  async function deleteThread(threadID) {
+    if (!confirm('Delete this thread and all its replies?')) return;
+    const r = await api(`/threads/${threadID}`, { method: 'DELETE' });
+    if (!r.ok) return toast(r.data?.message || 'Failed to delete', 'error');
+    toast('Thread deleted', 'success');
+    document.getElementById('thread-' + threadID)?.remove();
+    const card = document.getElementById('thread-' + threadID);
+    if (!card) {
+      // figure out which list is active
+      const c1 = document.getElementById('thread-cards-list');
+      const c2 = document.getElementById('threads-list-direct');
+      const container = (c1 && c1.offsetParent) ? c1 : c2;
+      if (container && !container.querySelectorAll('.thread-card').length) {
+        container.innerHTML = '<div class="empty-state"><p>No threads yet — be the first to post!</p></div>';
+      }
+    }
+  }
+
+  async function deleteReply(replyID, threadID) {
+    if (!confirm('Delete this reply?')) return;
+    const r = await api(`/replies/${replyID}`, { method: 'DELETE' });
+    if (!r.ok) return toast(r.data?.message || 'Failed to delete', 'error');
+    toast('Reply deleted', 'success');
+    const rr = await api(`/threads/${threadID}/replies`);
+    renderReplies(threadID, rr.ok ? rr.data : []);
+  }
+
+  async function postReply(threadID) {
+    const body = document.getElementById('reply-input-' + threadID)?.value.trim();
+    const parentID = document.getElementById('reply-parent-' + threadID)?.value || null;
+    if (!body) return toast('Please write something', 'error');
+    const r = await api(`/threads/${threadID}/replies`, {
+      method: 'POST',
+      body: JSON.stringify({ body, parentID: parentID ? parseInt(parentID) : null })
+    });
+    if (!r.ok) return toast(r.data?.message || 'Failed to post reply', 'error');
+    toast('Reply posted!', 'success');
+    document.getElementById('reply-input-' + threadID).value = '';
+    // Reload replies
+    const rr = await api(`/threads/${threadID}/replies`);
+    renderReplies(threadID, rr.ok ? rr.data : []);
+  }
+
+  function toggleTag(tag) {
+    const el = document.getElementById('tag-' + tag);
+    if (selectedTags.has(tag)) { selectedTags.delete(tag); el.classList.remove('tag-add'); }
+    else { selectedTags.add(tag); el.classList.add('tag-add'); }
+  }
+
+  async function postThread() {
+    const isDirect = document.getElementById('direct-forum-state').style.display !== 'none';
+    const titleEl = isDirect
+      ? document.getElementById('new-thread-title-direct')
+      : document.getElementById('new-thread-title');
+    const bodyEl = isDirect
+      ? document.getElementById('new-thread-body-direct')
+      : document.getElementById('new-thread-body');
+    const title = titleEl?.value.trim();
+    const body  = bodyEl?.value.trim();
+    if (!title || !body) return toast('Please fill in both fields', 'error');
+    if (!activeForum)    return toast('Please select a forum first', 'error');
+    const r = await api(`/forums/${activeForum}/threads`, { method: 'POST', body: JSON.stringify({ title, body }) });
+    if (!r.ok) return toast(r.data.message || 'Failed to post', 'error');
+    toast('Thread posted!', 'success');
+    if (titleEl) titleEl.value = '';
+    if (bodyEl)  bodyEl.value  = '';
+    selectedTags.clear();
+    const rt = await api(`/forums/${activeForum}/threads`);
+    allThreads = rt.ok ? rt.data : [];
+    isDirect ? renderThreadsDirect() : renderThreads();
+  }
+
+  function showCreateForumModal() {
+    if (!activeCourseID) return toast('Please select a course first', 'error');
+    openModal('create-forum-modal');
+  }
+
+  async function createForum() {
+    const courseID = activeCourseID;
+    if (!courseID) return;
+    const title = document.getElementById('new-forum-title').value.trim();
+    if (!title) return toast('Please enter a forum title', 'error');
+    const r = await api(`/courses/${courseID}/forums`, { method: 'POST', body: JSON.stringify({ title }) });
+    if (!r.ok) return toast(r.data.message || 'Failed', 'error');
+    toast('Forum created!', 'success');
+    closeModal('create-forum-modal');
+    document.getElementById('new-forum-title').value = '';
+    loadForums(courseID);
+  }
+
+  init();
+</script>
+</body>
+</html>

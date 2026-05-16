@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CourseFlow — Calendar Events</title>
+<link rel="stylesheet" href="/styles.css" />
+<style>
+  /* ── TWO-COL OVERRIDE: events layout ── */
+  .events-layout {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 960px) { .events-layout { grid-template-columns: 1fr; } }
+
+  /* ── COURSE SELECTOR PANEL ── */
+  .course-selector-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  /* ── EVENT CARDS ── */
+  .events-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .event-item-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-left: 4px solid var(--blue);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    display: flex; gap: 16px; align-items: flex-start;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.15s, transform 0.12s;
+  }
+  .event-item-card:hover { box-shadow: var(--shadow); transform: translateX(2px); }
+  .event-item-card.color-green  { border-left-color: var(--green);  }
+  .event-item-card.color-amber  { border-left-color: var(--amber);  }
+  .event-item-card.color-purple { border-left-color: var(--purple); }
+  .event-item-card.color-teal   { border-left-color: var(--teal);   }
+
+  .event-date-block {
+    text-align: center;
+    min-width: 48px;
+    background: var(--blue-light);
+    border-radius: 10px;
+    padding: 8px 6px;
+    color: var(--blue);
+    flex-shrink: 0;
+  }
+  .event-date-block.color-green  { background: var(--green-light);  color: var(--green); }
+  .event-date-block.color-amber  { background: var(--amber-light);  color: var(--amber); }
+  .event-date-block.color-purple { background: var(--purple-light); color: var(--purple); }
+  .event-date-block.color-teal   { background: var(--teal-light);   color: var(--teal); }
+  .event-month { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
+  .event-day   { font-size: 24px; font-weight: 900; line-height: 1; }
+
+  .event-info { flex: 1; min-width: 0; }
+  .event-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .event-time {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 12px; color: var(--blue); font-weight: 600; margin-bottom: 4px;
+  }
+  .event-time svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+  .event-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+  /* ── CREATE FORM ── */
+  .create-events-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    position: sticky;
+    top: 80px;
+  }
+  .create-form-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, #0f172a, #1e3a5f);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .create-form-header-icon {
+    width: 38px; height: 38px;
+    border-radius: 9px;
+    background: rgba(255,255,255,0.12);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .create-form-header-icon svg {
+    width: 18px; height: 18px; fill: none;
+    stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .create-form-header-title { font-size: 15px; font-weight: 700; color: #fff; }
+  .create-form-header-sub   { font-size: 12px; color: rgba(255,255,255,0.5); }
+
+  .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title">Calendar Events</div>
+        <div class="topbar-sub">Create and manage course events</div>
+      </div>
+      <div class="topbar-right">
+        <span class="role-chip admin" id="tb-role-chip">admin</span>
+        <a class="topbar-avatar-btn" href="/profile.html">
+          <div class="user-avatar" id="tb-avatar">?</div>
+          <span id="tb-username"></span>
+        </a>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <div class="events-layout">
+
+        <!-- LEFT: Course selector + event list -->
+        <div>
+          <!-- Course Selector -->
+          <div class="course-selector-panel">
+            <div class="panel-header">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:32px;height:32px;border-radius:8px;background:var(--blue-light);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                </div>
+                <div class="panel-title">Select Course</div>
+              </div>
+            </div>
+            <div class="panel-body" style="padding:16px 24px">
+              <select class="form-select" id="view-course-select" onchange="loadEvents()">
+                <option value="">— Choose a course to view events —</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Events List -->
+          <div id="events-list-container">
+            <div style="text-align:center;padding:48px 20px;color:var(--text-muted)">
+              <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px;display:block;margin-left:auto;margin-right:auto"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <p style="font-size:14px;font-weight:500">No course selected</p>
+              <p style="font-size:12px;color:var(--text-light);margin-top:4px">Select a course above to see its events</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Create Event Form -->
+        <div class="create-events-card">
+          <div class="create-form-header">
+            <div class="create-form-header-icon">
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/><line x1="10" y1="16" x2="14" y2="16"/></svg>
+            </div>
+            <div>
+              <div class="create-form-header-title">Create Event</div>
+              <div class="create-form-header-sub">Schedule a course calendar event</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label class="form-label">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                Course
+              </label>
+              <select class="form-select" id="create-course-select">
+                <option value="">— Select course —</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Event Title
+              </label>
+              <input class="form-input" id="ev-title" type="text" placeholder="e.g. Midterm Examination" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Description
+              </label>
+              <textarea class="form-textarea" id="ev-desc" placeholder="Describe the event details…" style="min-height:80px"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Date
+              </label>
+              <input class="form-input" id="ev-date" type="date" />
+            </div>
+
+            <div class="time-row">
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  Start Time
+                </label>
+                <input class="form-input" id="ev-start" type="time" />
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  End Time
+                </label>
+                <input class="form-input" id="ev-end" type="time" />
+              </div>
+            </div>
+
+            <div style="margin-top:20px">
+              <button class="btn btn-primary w-full" style="justify-content:center;padding:12px" onclick="createEvent()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/><line x1="10" y1="16" x2="14" y2="16"/></svg>
+                Create Event
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+<script src="/app.js"></script>
+<script>
+  if (!requireRole('admin')) {}
+  renderSidebar('admin-events');
+
+  const COLORS = ['','color-green','color-amber','color-purple','color-teal'];
+
+  async function init() {
+    const r = await api('/courses');
+    const courses = r.ok ? r.data : [];
+
+    ['view-course-select', 'create-course-select'].forEach(id => {
+      const sel = document.getElementById(id);
+      courses.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c.courseID;
+        o.textContent = `${c.ccode} — ${c.cname}`;
+        sel.appendChild(o);
+      });
+    });
+  }
+
+  async function loadEvents() {
+    const courseID = document.getElementById('view-course-select').value;
+    const container = document.getElementById('events-list-container');
+
+    if (!courseID) {
+      container.innerHTML = `
+        <div style="text-align:center;padding:48px 20px;color:var(--text-muted)">
+          <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px;display:block;margin-left:auto;margin-right:auto"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <p style="font-size:14px;font-weight:500">No course selected</p>
+          <p style="font-size:12px;color:var(--text-light);margin-top:4px">Select a course above to see its events</p>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = '<div class="loading"><div class="spinner"></div> Loading events…</div>';
+
+    const r = await api('/courses/' + courseID + '/events');
+    const events = (r.ok ? r.data : []).sort((a, b) => {
+      const da = (a.event_date || '') + 'T' + (a.start_time || '00:00:00');
+      const db = (b.event_date || '') + 'T' + (b.start_time || '00:00:00');
+      return da.localeCompare(db);
+    });
+
+    if (!events.length) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <p>No events for this course yet</p>
+          <p style="font-size:12px;color:var(--text-light);margin-top:4px">Use the form on the right to create one</p>
+        </div>`;
+      return;
+    }
+
+    function formatTime(t) {
+      if (!t) return '';
+      const [h,m] = t.split(':');
+      const hr = parseInt(h);
+      return `${hr>12?hr-12:hr||12}:${m} ${hr>=12?'PM':'AM'}`;
+    }
+
+    container.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-size:14px;font-weight:700">${events.length} Event${events.length!==1?'s':''}</div>
+        <span class="badge badge-blue">${events.length} total</span>
+      </div>
+      <div class="events-list">
+        ${events.map((ev, i) => {
+          const color = COLORS[i % COLORS.length];
+          const d = ev.event_date ? new Date(ev.event_date + 'T00:00:00') : null;
+          const month = d ? d.toLocaleString('en',{month:'short'}) : '—';
+          const day   = d ? d.getDate() : '—';
+          return `
+            <div class="event-item-card ${color}">
+              <div class="event-date-block ${color}">
+                <div class="event-month">${month}</div>
+                <div class="event-day">${day}</div>
+              </div>
+              <div class="event-info">
+                <div class="event-title">${ev.title || 'Untitled Event'}</div>
+                ${ev.start_time ? `
+                  <div class="event-time">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    ${formatTime(ev.start_time)}${ev.end_time ? ' — ' + formatTime(ev.end_time) : ''}
+                  </div>` : ''}
+                ${ev.description ? `<div class="event-desc">${ev.description}</div>` : ''}
+              </div>
+            </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  async function createEvent() {
+    const courseID = document.getElementById('create-course-select').value;
+    const title       = document.getElementById('ev-title').value.trim();
+    const description = document.getElementById('ev-desc').value.trim();
+    const event_date  = document.getElementById('ev-date').value;
+    const start_time  = document.getElementById('ev-start').value;
+    const end_time    = document.getElementById('ev-end').value;
+
+    if (!courseID) return toast('Please select a course', 'error');
+    if (!title)    return toast('Event title is required', 'error');
+    if (!event_date) return toast('Please select a date', 'error');
+
+    const body = { title, description, event_date, start_time, end_time };
+    const r = await api('/courses/' + courseID + '/events', {
+      method: 'POST',
+      body: JSON.stringify(body)
+    });
+
+    toast(r.data?.message || (r.ok ? 'Event created!' : 'Failed to create event'), r.ok ? 'success' : 'error');
+
+    if (r.ok) {
+      document.getElementById('ev-title').value = '';
+      document.getElementById('ev-desc').value  = '';
+      document.getElementById('ev-date').value  = '';
+      document.getElementById('ev-start').value = '';
+      document.getElementById('ev-end').value   = '';
+
+      // If viewing the same course, refresh the list
+      const viewSel = document.getElementById('view-course-select').value;
+      if (viewSel === courseID) loadEvents();
+      else {
+        document.getElementById('view-course-select').value = courseID;
+        loadEvents();
+      }
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>

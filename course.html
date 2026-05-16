@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CourseFlow — Course</title>
+<link rel="stylesheet" href="/styles.css" />
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet" />
+<style>
+  /* Quill editor overrides */
+  .ql-toolbar { border-radius: 8px 8px 0 0 !important; border-color: var(--border) !important; background: var(--border-light); }
+  .ql-container { border-radius: 0 0 8px 8px !important; border-color: var(--border) !important; font-family: inherit; font-size: 14px; min-height: 140px; }
+  .ql-editor { min-height: 140px; color: var(--text); line-height: 1.7; }
+  .ql-editor.ql-blank::before { color: var(--text-light); font-style: italic; }
+</style>
+<style>
+  /* ── HERO ── */
+  .course-hero {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 28px;
+    position: relative;
+    min-height: 240px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 36px 40px 0;
+  }
+  .course-hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(160deg, rgba(0,0,0,0.0) 0%, rgba(0,0,0,0.62) 100%);
+    pointer-events: none; z-index: 0;
+  }
+  .course-hero-watermark {
+    position: absolute; right: -10px; top: 50%; transform: translateY(-50%);
+    opacity: 0.07; width: 240px; height: 240px; color: #fff; z-index: 0;
+  }
+  .course-hero-watermark svg { width: 100%; height: 100%; stroke: currentColor; }
+
+  .course-hero-badge {
+    display: inline-flex; align-items: center;
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.28);
+    backdrop-filter: blur(8px);
+    border-radius: 20px; padding: 4px 13px;
+    font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 0.06em; text-transform: uppercase;
+    margin-bottom: 14px; position: relative; z-index: 1; width: fit-content;
+  }
+  .course-hero-code {
+    font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.55);
+    letter-spacing: 0.14em; text-transform: uppercase;
+    position: relative; z-index: 1; margin-bottom: 8px;
+  }
+  .course-hero-name {
+    font-size: 32px; font-weight: 800; color: #fff; line-height: 1.15;
+    position: relative; z-index: 1; max-width: 640px;
+    text-shadow: 0 2px 16px rgba(0,0,0,0.25);
+  }
+  /* stat strip pinned to bottom of hero */
+  .course-hero-stats {
+    display: flex; align-items: stretch;
+    position: relative; z-index: 1;
+    margin-top: 28px; margin-left: -40px; margin-right: -40px;
+    border-top: 1px solid rgba(255,255,255,0.12);
+    background: rgba(0,0,0,0.22);
+    backdrop-filter: blur(6px);
+  }
+  .hero-stat {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    padding: 14px 16px;
+    border-right: 1px solid rgba(255,255,255,0.1);
+  }
+  .hero-stat:last-child { border-right: none; }
+  .hero-stat-value { font-size: 20px; font-weight: 800; color: #fff; line-height: 1; }
+  .hero-stat-label { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 4px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }
+
+  /* ── PAGE LAYOUT ── */
+  .course-layout {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 900px) { .course-layout { grid-template-columns: 1fr; } }
+
+  /* ── TABBED PANEL ── */
+  .tab-panel-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .tab-bar {
+    display: flex; align-items: center; gap: 4px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .tab-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 13px;
+    font-size: 13px; font-weight: 600; color: var(--text-muted);
+    background: none; border: 1.5px solid transparent;
+    border-radius: 10px; cursor: pointer;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .tab-btn:hover { color: var(--text); background: var(--border-light); }
+  .tab-btn.active {
+    background: var(--blue-light); color: var(--blue);
+    border-color: #bfdbfe;
+  }
+  .tab-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .tab-count {
+    font-size: 12px; font-weight: 700; color: var(--text-light);
+    transition: color 0.15s;
+  }
+  .tab-btn.active .tab-count { color: var(--blue); opacity: 0.7; }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* ── ABOUT ── */
+  .about-body { padding: 24px 26px; }
+  .about-body p { font-size: 14px; line-height: 1.8; color: var(--text-muted); margin: 0 0 10px; }
+  .about-body h1, .about-body h2, .about-body h3 { color: var(--text); margin: 14px 0 6px; font-weight: 700; }
+  .about-body ul, .about-body ol { padding-left: 22px; margin: 8px 0; color: var(--text-muted); font-size: 14px; line-height: 1.8; }
+  .about-body a { color: var(--blue); }
+  .about-body strong { color: var(--text); }
+
+  /* ── FORUMS ── */
+  .forum-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer; transition: background 0.12s;
+    text-decoration: none;
+  }
+  .forum-row:last-child { border-bottom: none; }
+  .forum-row:hover { background: var(--border-light); }
+  .forum-icon {
+    width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+    background: var(--blue-light);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .forum-icon svg { width: 16px; height: 16px; stroke: var(--blue); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .forum-info { flex: 1; min-width: 0; }
+  .forum-title { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .forum-date { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .forum-arrow { color: var(--text-light); }
+  .forum-arrow svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+  /* ── STUDENT PAGINATION ── */
+  .students-pager { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 14px 20px; border-top: 1px solid var(--border); }
+  .pager-btn { min-width: 32px; height: 32px; padding: 0 8px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); font-size: 13px; font-weight: 500; color: var(--text); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.12s; }
+  .pager-btn:hover:not(:disabled) { background: var(--blue-light); border-color: var(--blue); color: var(--blue); }
+  .pager-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 700; }
+  .pager-btn:disabled { opacity: 0.35; cursor: default; }
+  .pager-btn svg { stroke: currentColor; fill: none; }
+  .pager-ellipsis { font-size: 13px; color: var(--text-muted); padding: 0 4px; }
+
+  /* ── TAB TOOLBAR ── */
+  .tab-toolbar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── ASSIGNMENTS ── */
+  .asgn-card {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+    transition: background 0.12s;
+  }
+  .asgn-card:last-child { border-bottom: none; }
+  .asgn-card:hover { background: var(--border-light); }
+  .asgn-accent {
+    width: 4px; height: 44px; border-radius: 4px; flex-shrink: 0;
+    background: var(--blue);
+  }
+  .asgn-accent.overdue { background: #ef4444; }
+  .asgn-body { flex: 1; min-width: 0; }
+  .asgn-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .asgn-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .asgn-due { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-muted); }
+  .asgn-due svg { flex-shrink: 0; stroke: currentColor; }
+  .asgn-due.overdue { color: #ef4444; font-weight: 600; }
+  .asgn-max { font-size: 12px; color: var(--text-light); }
+  .asgn-desc { font-size: 12px; color: var(--text-muted); margin-top: 3px; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 420px; }
+  .asgn-sub-status { font-size: 11px; font-weight: 600; margin-top: 3px; }
+  .asgn-sub-status.submitted { color: #10b981; }
+  .asgn-sub-status.graded { color: var(--blue); }
+  /* submissions list (lecturer view) */
+  .sub-row { display: flex; align-items: center; gap: 14px; padding: 14px 20px; border-bottom: 1px solid var(--border); transition: background 0.12s; }
+  .sub-row:last-child { border-bottom: none; }
+  .sub-row:hover { background: var(--border-light); }
+  .sub-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .sub-info { flex: 1; min-width: 0; }
+  .sub-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+  .sub-link { font-size: 12px; color: var(--blue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+  .sub-grade-wrap { display: flex; align-items: center; gap: 0; flex-shrink: 0; background: var(--border-light); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .sub-grade-input { width: 70px; padding: 7px 10px; border: none; border-right: 1px solid var(--border); background: transparent; font-size: 13px; font-weight: 600; text-align: center; outline: none; color: var(--text); }
+  .sub-grade-input:focus { background: var(--surface); }
+  .sub-grade-save { padding: 7px 12px; font-size: 12px; font-weight: 600; color: var(--blue); background: transparent; border: none; cursor: pointer; transition: background 0.12s; white-space: nowrap; }
+  .sub-grade-save:hover { background: var(--blue-light); }
+  .sub-grade-save:disabled { opacity: 0.5; cursor: default; }
+
+  /* ── CONTENT ── */
+  .content-group { border-bottom: 1px solid var(--border); }
+  .content-group:last-child { border-bottom: none; }
+  .content-group-header {
+    padding: 12px 22px 8px;
+    display: flex; align-items: center; gap: 8px;
+    background: var(--border-light);
+    border-bottom: 1px solid var(--border);
+  }
+  .content-group-header svg { width: 13px; height: 13px; stroke: var(--text-muted); fill: none; stroke-width: 2; stroke-linecap: round; flex-shrink: 0; }
+  .content-group-title { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-muted); }
+  .content-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 22px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.12s;
+  }
+  .content-item:last-child { border-bottom: none; }
+  .content-item:hover { background: var(--border-light); }
+  .content-item-icon {
+    width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .content-item-icon svg { width: 16px; height: 16px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .content-item-title { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; }
+  .content-item-link {
+    font-size: 12px; font-weight: 600; color: var(--blue);
+    text-decoration: none; padding: 4px 10px;
+    background: var(--blue-light); border-radius: 6px;
+    white-space: nowrap; transition: background 0.12s;
+  }
+  .content-item-link:hover { background: #dbeafe; }
+  .empty-panel { padding: 48px 24px; text-align: center; color: var(--text-muted); font-size: 13px; }
+  .empty-panel svg { width: 32px; height: 32px; stroke: var(--border); fill: none; stroke-width: 1.5; stroke-linecap: round; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto; }
+
+  /* ── STUDENTS ── */
+  .students-toolbar {
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .students-search-wrap {
+    flex: 1; position: relative;
+  }
+  .students-search-wrap svg {
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    width: 14px; height: 14px; stroke: var(--text-light); fill: none; stroke-width: 2; stroke-linecap: round; pointer-events: none;
+  }
+  .students-search-wrap input {
+    width: 100%; padding: 8px 12px 8px 32px;
+    background: var(--border-light); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); font-size: 13px; color: var(--text);
+    outline: none; transition: border-color 0.15s, background 0.15s;
+    box-sizing: border-box;
+  }
+  .students-search-wrap input:focus { border-color: var(--blue); background: #fff; }
+  .students-search-wrap input::placeholder { color: var(--text-light); }
+  .students-count-badge {
+    font-size: 12px; font-weight: 700; color: var(--text-muted);
+    background: var(--border-light); border: 1px solid var(--border);
+    border-radius: 20px; padding: 4px 11px; white-space: nowrap;
+  }
+
+  .student-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 22px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.12s;
+    cursor: default;
+  }
+  .student-row:last-child { border-bottom: none; }
+  .student-row:hover { background: var(--border-light); }
+  .student-avatar {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; color: #fff; text-transform: uppercase;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,0.06);
+  }
+  .student-info { flex: 1; min-width: 0; }
+  .student-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .student-username { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .student-index {
+    font-size: 11px; font-weight: 700; color: var(--text-light);
+    min-width: 24px; text-align: right;
+  }
+
+  /* ── EVENTS TAB ── */
+  .event-card {
+    display: flex; align-items: flex-start; gap: 16px;
+    padding: 14px 22px; border-bottom: 1px solid var(--border);
+    transition: background 0.12s;
+  }
+  .event-card:last-child { border-bottom: none; }
+  .event-card:hover { background: var(--border-light); }
+  .event-card.event-past { opacity: 0.5; }
+  .event-date-block {
+    width: 44px; flex-shrink: 0;
+    background: var(--blue-light); border-radius: 10px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 6px 0;
+  }
+  .event-month { font-size: 9px; font-weight: 800; color: var(--blue); letter-spacing: .06em; text-transform: uppercase; }
+  .event-day   { font-size: 20px; font-weight: 800; color: var(--blue); line-height: 1.1; }
+  .event-info  { flex: 1; min-width: 0; }
+  .event-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .event-time  { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .event-desc  { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+  /* ── SIDEBAR ── */
+  .side-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .side-card-label {
+    padding: 16px 18px 0;
+    font-size: 11px; font-weight: 700; color: var(--text-light);
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .side-card-body { padding: 14px 18px 18px; }
+
+  /* enrol */
+  .enrol-btn {
+    width: 100%; padding: 12px;
+    background: var(--blue); color: #fff; border: none;
+    border-radius: var(--radius-sm); font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+  }
+  .enrol-btn svg { width: 15px; height: 15px; stroke: #fff; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .enrol-btn:hover { background: #1d4ed8; box-shadow: 0 4px 14px rgba(37,99,235,0.35); transform: translateY(-1px); }
+  .enrol-btn.enrolled { background: #f0fdf4; color: #16a34a; border: 1.5px solid #bbf7d0; cursor: default; box-shadow: none; transform: none; }
+  .enrol-btn.enrolled svg { stroke: #16a34a; }
+  .enrol-btn.drop { background: #fef2f2; color: #ef4444; border: 1.5px solid #fecaca; margin-top: 8px; box-shadow: none; }
+  .enrol-btn.drop:hover { background: #ef4444; color: #fff; box-shadow: 0 2px 8px rgba(239,68,68,0.3); }
+  .enrol-btn.drop:hover svg { stroke: #fff; }
+
+  /* lecturer */
+  .lecturer-card-inner { display: flex; align-items: center; gap: 14px; }
+  .lecturer-av {
+    width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--blue) 0%, #7c3aed 100%);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 800;
+    box-shadow: 0 0 0 3px var(--blue-light);
+  }
+  .lecturer-fullname { font-size: 14px; font-weight: 700; color: var(--text); }
+  .lecturer-role-tag {
+    display: inline-block; margin-top: 5px;
+    font-size: 11px; font-weight: 700; padding: 2px 8px;
+    background: var(--blue-light); color: var(--blue);
+    border-radius: 6px; letter-spacing: 0.03em;
+  }
+
+  /* details */
+  .detail-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+  }
+  .detail-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .detail-label { color: var(--text-muted); display: flex; align-items: center; gap: 7px; }
+  .detail-label svg { width: 13px; height: 13px; stroke: var(--text-light); fill: none; stroke-width: 2; stroke-linecap: round; }
+  .detail-value { font-weight: 700; color: var(--text); }
+
+  /* back */
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 600; color: var(--text-muted);
+    text-decoration: none; margin-bottom: 20px; transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--text); }
+  .back-link svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="tb-title">Course</div>
+        <div class="topbar-sub" id="tb-sub">Loading…</div>
+      </div>
+      <div class="topbar-right">
+        <span class="role-chip" id="tb-role-chip"></span>
+        <a class="topbar-avatar-btn" href="/profile.html">
+          <div class="user-avatar" id="tb-avatar">?</div>
+          <span id="tb-username"></span>
+        </a>
+      </div>
+    </header>
+
+    <div class="page-content" id="page-content">
+      <div class="loading"><div class="spinner"></div> Loading course…</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Submit Assignment Modal (student) -->
+<div class="modal-overlay" id="submit-assignment-modal">
+  <div class="modal" style="width:460px">
+    <div class="modal-header">
+      <div class="modal-title" id="submit-asgn-title">Submit Assignment</div>
+      <button class="modal-close" onclick="closeModal('submit-assignment-modal')">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--text-muted);margin:0 0 16px">Paste a link to your submission (Google Drive, OneDrive, GitHub, etc.)</p>
+    <div class="form-group">
+      <label class="form-label">Submission Link</label>
+      <input class="form-input" id="submit-asgn-link" type="url" placeholder="https://…" />
+    </div>
+    <div class="form-group" style="margin-top:4px">
+      <label class="form-label" style="font-size:11px;color:var(--text-muted)">Max grade: <span id="submit-asgn-max"></span></label>
+    </div>
+    <button class="btn btn-primary w-full mt-8" style="justify-content:center" onclick="submitAssignment()">Submit</button>
+  </div>
+</div>
+
+
+
+<div class="modal-overlay" id="add-event-modal">
+  <div class="modal" style="width:460px">
+    <div class="modal-header">
+      <div class="modal-title">Add Calendar Event</div>
+      <button class="modal-close" onclick="closeModal('add-event-modal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Title</label>
+      <input class="form-input" id="aev-title" type="text" placeholder="e.g. Midterm Exam" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <textarea class="form-textarea" id="aev-desc" placeholder="Optional details…" style="min-height:60px"></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-input" id="aev-date" type="date" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Start Time</label>
+        <input class="form-input" id="aev-start" type="time" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">End Time</label>
+      <input class="form-input" id="aev-end" type="time" />
+    </div>
+    <button class="btn btn-primary w-full mt-8" style="justify-content:center" onclick="submitAddEvent()">Create Event</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="course-add-forum-modal">
+  <div class="modal" style="width:400px">
+    <div class="modal-header">
+      <div class="modal-title">New Forum</div>
+      <button class="modal-close" onclick="closeModal('course-add-forum-modal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Forum Title</label>
+      <input class="form-input" id="caf-title" type="text" placeholder="e.g. Week 3 Discussion" />
+    </div>
+    <button class="btn btn-primary w-full mt-8" style="justify-content:center" onclick="submitCourseAddForum()">Create Forum</button>
+  </div>
+</div>
+
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script src="/app.js"></script>
+<script>
+  const params   = new URLSearchParams(location.search);
+  const courseID = parseInt(params.get('id'));
+  const _from    = params.get('from') || (document.referrer.includes('enrolments') ? 'enrolments' : 'courses');
+
+  const AVATAR_COLORS = ['#6366f1','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#06b6d4'];
+  function avatarColor(name) { return AVATAR_COLORS[(name||'?').charCodeAt(0) % AVATAR_COLORS.length]; }
+
+  async function init() {
+    if (!requireAuth()) return;
+    renderSidebar(_from);
+    if (!courseID) { renderError('No course specified.'); return; }
+    await loadCourse();
+  }
+
+  async function loadCourse() {
+    const [courseRes, membersRes, contentRes, forumsRes, eventsRes, assignmentsRes] = await Promise.all([
+      api(`/courses/${courseID}`),
+      api(`/courses/${courseID}/members`),
+      api(`/courses/${courseID}/content`),
+      api(`/courses/${courseID}/forums`),
+      api(`/courses/${courseID}/events`),
+      api(`/courses/${courseID}/assignments`),
+    ]);
+
+    if (!courseRes.ok) { renderError('Course not found.'); return; }
+
+    const course  = courseRes.data;
+    const members = membersRes.ok ? membersRes.data : [];
+    const content = contentRes.ok ? contentRes.data : [];
+    const forums      = forumsRes.ok      ? forumsRes.data      : [];
+    const events      = eventsRes.ok      ? eventsRes.data      : [];
+    const assignments = assignmentsRes.ok ? assignmentsRes.data : [];
+
+    const sub             = classifyCourse(course.cname, course.ccode);
+    const lecturer        = course.fname ? `${course.fname} ${course.lname || ''}`.trim() : null;
+    const role            = CF.user?.role;
+    const userID          = CF.user?.userID;
+    const isEnrolled      = role === 'student' && members.some(m => Number(m.userID) === Number(userID));
+    const canManageEvents = role === 'lecturer' || role === 'admin';
+
+    document.getElementById('tb-title').textContent = course.ccode || 'Course';
+    document.getElementById('tb-sub').textContent   = course.cname || '';
+
+    // ── content HTML ──
+    const iconPaths = {
+      link:  '<polyline points="22 2 15 22 11 13 2 9 22 2"/>',
+      file:  '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
+      slide: '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>'
+    };
+    const iconColors = { link: '#0ea5e9', file: '#10b981', slide: '#8b5cf6' };
+
+    let contentHTML = '';
+    if (content.length) {
+      content.forEach(s => {
+        const mgmtBtns = canManageEvents ? `
+          <div style="margin-left:auto;display:flex;gap:4px">
+            <button class="btn btn-ghost btn-xs" title="Rename section" onclick="openRenameSection(${s.sectionID}, this)" style="padding:3px 7px;font-size:11px;color:var(--text-muted)">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="btn btn-ghost btn-xs" title="Delete section" onclick="deleteSection(${s.sectionID})" style="padding:3px 7px;font-size:11px;color:var(--danger,#ef4444)">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button>
+          </div>` : '';
+        contentHTML += `<div class="content-group">
+          <div class="content-group-header">
+            <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <span class="content-group-title">${s.title}</span>
+            ${mgmtBtns}
+          </div>`;
+        if (s.items && s.items.length) {
+          s.items.forEach(i => {
+            contentHTML += `<div class="content-item">
+              <div class="content-item-icon" style="background:${iconColors[i.type]||'#64748b'}">
+                <svg viewBox="0 0 24 24">${iconPaths[i.type]||iconPaths.file}</svg>
+              </div>
+              <span class="content-item-title">${i.title}</span>
+              ${i.url ? `<a class="content-item-link" href="${i.url}" target="_blank">Open ↗</a>` : ''}
+            </div>`;
+          });
+        } else {
+          contentHTML += `<div style="padding:14px 22px;font-size:13px;color:var(--text-muted)">No items in this section yet.</div>`;
+        }
+        contentHTML += '</div>';
+      });
+    } else {
+      contentHTML = `<div class="empty-panel">
+        <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        No content has been added yet.
+      </div>`;
+    }
+
+    // ── events HTML ──
+    const today = new Date().toISOString().split('T')[0];
+    const upcomingEvents = events.filter(e => e.event_date >= today);
+    let eventsHTML = '';
+    if (events.length) {
+      eventsHTML = events.map(e => {
+        const d     = new Date(e.event_date + 'T00:00:00');
+        const month = d.toLocaleString('default', { month: 'short' }).toUpperCase();
+        const day   = d.getDate();
+        const time  = e.start_time ? `${e.start_time}${e.end_time ? ' – ' + e.end_time : ''}` : '';
+        const isPast = e.event_date < today;
+        return `<div class="event-card${isPast ? ' event-past' : ''}">
+          <div class="event-date-block">
+            <div class="event-month">${month}</div>
+            <div class="event-day">${day}</div>
+          </div>
+          <div class="event-info">
+            <div class="event-title">${e.title}</div>
+            ${time ? `<div class="event-time">${time}</div>` : ''}
+            ${e.description ? `<div class="event-desc">${e.description}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+    } else {
+      eventsHTML = `<div class="empty-panel">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        No events scheduled for this course.
+      </div>`;
+    }
+    // wrap with add-event button for lecturers/admins
+    if (canManageEvents) {
+      eventsHTML = '<div class="tab-toolbar"><button class="btn btn-primary btn-sm" onclick="openAddEventModal()">'
+        + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>'
+        + ' Add Event</button></div>' + eventsHTML;
+    }
+
+    // store for edit lookups
+    _asgnData = assignments;
+
+    // ── assignments HTML ──
+    let assignmentsHTML = '';
+    if (assignments.length) {
+      const today = new Date();
+      assignments.forEach(a => {
+        const due     = a.duedate ? new Date(a.duedate) : null;
+        const overdue = due && due < today;
+        const dueStr  = due ? due.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                            + (a.duedate.includes('T') ? ' ' + due.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '') : null;
+        assignmentsHTML += '<div class="asgn-card" data-aid="' + a.assignmentID + '">'
+          + '<div class="asgn-accent' + (overdue ? ' overdue' : '') + '"></div>'
+          + '<div class="asgn-body">'
+          + '<div class="asgn-title">' + a.title + '</div>'
+          + '<div class="asgn-meta">'
+          + (dueStr ? '<span class="asgn-due' + (overdue ? ' overdue' : '') + '">'
+            + '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'
+            + (overdue ? 'Overdue · ' : 'Due · ') + dueStr + '</span>' : '')
+          + '<span class="asgn-max">' + a.maxgrade + ' pts</span>'
+          + '</div>'
+          + (a.description ? '<div class="asgn-desc">' + a.description + '</div>' : '')
+          + '<div class="asgn-sub-status" id="asgn-status-' + a.assignmentID + '"></div>'
+          + '</div>'
+          + (canManageEvents
+            ? '<div style="display:flex;gap:6px;flex-shrink:0">'
+              + '<button class="btn btn-ghost btn-sm" onclick="openEditAssignment(' + a.assignmentID + ')" title="Edit">'
+              + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'
+              + '</button>'
+              + '<button class="btn btn-primary btn-sm" onclick="openSubmissions(' + a.assignmentID + ', \'' + a.title.replace(/'/g, "\\'") + '\')">View Submissions</button>'
+              + '</div>'
+            : '<button class="btn btn-primary btn-sm" style="flex-shrink:0" onclick="openSubmitModal(' + a.assignmentID + ', \'' + a.title.replace(/'/g, "\\'") + '\', ' + a.maxgrade + ')">Submit</button>')
+          + '</div>';
+      });
+    } else {
+      assignmentsHTML = '<div class="empty-panel"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>No assignments yet.</div>';
+    }
+    let assignmentsTabHTML = assignmentsHTML;
+    if (canManageEvents) {
+      assignmentsTabHTML = '<div class="tab-toolbar">'
+        + '<button class="btn btn-primary btn-sm" onclick="openNewAssignment()">'
+        + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>'
+        + ' New Assignment</button></div>' + assignmentsHTML;
+    }
+
+    // ── forums HTML ──
+    let forumsHTML = '';
+    if (forums.length) {
+      forums.forEach(f => {
+        const date = new Date(f.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        forumsHTML += `<a class="forum-row" href="/forums.html?forumID=${f.forumID}">
+          <div class="forum-icon">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div class="forum-info">
+            <div class="forum-title">${f.title}</div>
+            <div class="forum-date">${date}</div>
+          </div>
+          <div class="forum-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </a>`;
+      });
+    } else {
+      forumsHTML = `<div class="empty-panel">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        No forums yet for this course.
+      </div>`;
+    }
+
+    // ── students — stored for pagination ──
+    _allMembers = members;
+    _viewerRole = role;
+
+    // ── enrol HTML ──
+    let enrollHTML = '';
+    if (role === 'student') {
+      if (isEnrolled) {
+        enrollHTML = `
+          <button class="enrol-btn enrolled" disabled>
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Enrolled
+          </button>
+          <button class="enrol-btn drop" onclick="unenroll()">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Drop Course
+          </button>`;
+      } else {
+        enrollHTML = `
+          <button class="enrol-btn" onclick="enroll()">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Enrol in this Course
+          </button>`;
+      }
+    }
+
+    const lecturerHTML = lecturer
+      ? `<div class="lecturer-card-inner">
+           <div class="lecturer-av">${course.fname[0].toUpperCase()}</div>
+           <div>
+             <div class="lecturer-fullname">${lecturer}</div>
+             <span class="lecturer-role-tag">Lecturer</span>
+           </div>
+         </div>`
+      : `<p style="font-size:13px;color:var(--text-muted);margin:0">No lecturer assigned yet</p>`;
+
+    document.getElementById('page-content').innerHTML = `
+      <a class="back-link" href="${_from === 'enrolments' ? '/enrolments.html' : '/courses.html'}">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        ${_from === 'enrolments' ? 'Back to My Enrolments' : 'Back to Course Catalog'}
+      </a>
+
+      <!-- HERO -->
+      <div class="course-hero ${sub.cls}">
+        <div class="course-hero-watermark">${sub.icon}</div>
+        <span class="course-hero-badge">${sub.label}</span>
+        <div class="course-hero-code">${course.ccode || ''}</div>
+        <div class="course-hero-name">${course.cname || ''}</div>
+        <div class="course-hero-stats">
+          <div class="hero-stat">
+            <div class="hero-stat-value">${members.length}</div>
+            <div class="hero-stat-label">Students</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-value">${content.length}</div>
+            <div class="hero-stat-label">Sections</div>
+          </div>
+          ${lecturer ? `<div class="hero-stat">
+            <div class="hero-stat-value" style="font-size:15px;font-weight:700">${lecturer}</div>
+            <div class="hero-stat-label">Lecturer</div>
+          </div>` : ''}
+        </div>
+      </div>
+
+      <!-- BODY -->
+      <div class="course-layout">
+
+        <!-- LEFT: tabs -->
+        <div>
+          <div class="tab-panel-card">
+            <div class="tab-bar">
+              <button class="tab-btn active" onclick="switchTab('content',this)">
+                <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                Content
+                <span class="tab-count">${content.length}</span>
+              </button>
+              <button class="tab-btn" onclick="switchTab('students',this)">
+                <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Students
+                <span class="tab-count">${members.length}</span>
+              </button>
+              <button class="tab-btn" onclick="switchTab('forums',this)">
+                <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Forums
+                <span class="tab-count">${forums.length}</span>
+              </button>
+              <button class="tab-btn" onclick="switchTab('events',this)">
+                <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Events
+                <span class="tab-count">${events.length}</span>
+              </button>
+              <button class="tab-btn" onclick="switchTab('assignments',this)">
+                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                Assignments
+                <span class="tab-count">${assignments.length}</span>
+              </button>
+              <button class="tab-btn" onclick="switchTab('about',this)">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                About
+              </button>
+            </div>
+
+            <div id="tab-content" class="tab-pane active">
+              <div id="content-main-view">
+                ${canManageEvents ? `<div class="tab-toolbar">
+                  <button class="btn btn-primary btn-sm" onclick="openAddSectionView()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add Section
+                  </button>
+                  <button class="btn btn-primary btn-sm" onclick="openAddItemView()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                    Add Item
+                  </button>
+                </div>` : ''}
+                ${contentHTML}
+              </div>
+
+              <div id="content-section-view" style="display:none">
+                <div class="tab-toolbar" style="justify-content:space-between">
+                  <button class="btn btn-ghost btn-sm" onclick="showContentMain()" style="display:flex;align-items:center;gap:6px">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    Back to Content
+                  </button>
+                  <span id="content-section-heading" style="font-size:13px;font-weight:700;color:var(--text)"></span>
+                </div>
+                <div style="padding:20px 24px">
+                  <div class="form-group">
+                    <label class="form-label">Section Title</label>
+                    <input class="form-input" id="sec-title-inline" type="text" placeholder="e.g. Week 1 — Introduction" />
+                  </div>
+                  <div style="display:flex;gap:8px;margin-top:4px;justify-content:flex-end">
+                    <button class="btn btn-ghost btn-sm" onclick="showContentMain()">Cancel</button>
+                    <button class="btn btn-primary btn-sm" id="sec-submit-btn" onclick="submitSectionForm()">Create Section</button>
+                  </div>
+                </div>
+              </div>
+
+              <div id="content-item-view" style="display:none">
+                <div class="tab-toolbar" style="justify-content:space-between">
+                  <button class="btn btn-ghost btn-sm" onclick="showContentMain()" style="display:flex;align-items:center;gap:6px">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    Back to Content
+                  </button>
+                  <span style="font-size:13px;font-weight:700;color:var(--text)">Add Item</span>
+                </div>
+                <div style="padding:20px 24px">
+                  <div class="form-group">
+                    <label class="form-label">Section</label>
+                    <select class="form-input" id="item-section-select"></select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Type</label>
+                    <select class="form-input" id="item-type">
+                      <option value="link">Link</option>
+                      <option value="file">File</option>
+                      <option value="slide">Slide</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Title</label>
+                    <input class="form-input" id="item-title" type="text" placeholder="e.g. Lecture Notes Week 1" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">URL</label>
+                    <input class="form-input" id="item-url" type="url" placeholder="https://…" />
+                  </div>
+                  <div style="display:flex;gap:8px;margin-top:4px;justify-content:flex-end">
+                    <button class="btn btn-ghost btn-sm" onclick="showContentMain()">Cancel</button>
+                    <button class="btn btn-primary btn-sm" onclick="submitAddItem()">Add Item</button>
+                  </div>
+                </div>
+              </div>
+
+              <div id="content-rename-view" style="display:none">
+                <div class="tab-toolbar" style="justify-content:space-between">
+                  <button class="btn btn-ghost btn-sm" onclick="showContentMain()" style="display:flex;align-items:center;gap:6px">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    Back to Content
+                  </button>
+                  <span style="font-size:13px;font-weight:700;color:var(--text)">Rename Section</span>
+                </div>
+                <div style="padding:20px 24px">
+                  <div class="form-group">
+                    <label class="form-label">Section Title</label>
+                    <input class="form-input" id="rename-sec-title" type="text" placeholder="e.g. Week 1 — Introduction" />
+                  </div>
+                  <div style="display:flex;gap:8px;margin-top:4px;justify-content:flex-end">
+                    <button class="btn btn-ghost btn-sm" onclick="showContentMain()">Cancel</button>
+                    <button class="btn btn-primary btn-sm" onclick="submitRenameSection()">Save</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="tab-forums" class="tab-pane">
+              ${canManageEvents ? `<div class="tab-toolbar">
+                <button class="btn btn-primary btn-sm" onclick="openModal('course-add-forum-modal')">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  New Forum
+                </button>
+              </div>` : ''}
+              ${forumsHTML}
+            </div>
+
+            <div id="tab-events" class="tab-pane">${eventsHTML}</div>
+
+            <div id="tab-assignments" class="tab-pane">
+              <div id="asgn-list-view">${assignmentsTabHTML}</div>
+
+              <div id="asgn-subs-view" style="display:none">
+                <div class="tab-toolbar" style="justify-content:space-between">
+                  <button class="btn btn-ghost btn-sm" onclick="showAsgnList()" style="display:flex;align-items:center;gap:6px">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    Back to Assignments
+                  </button>
+                  <span id="asgn-subs-heading" style="font-size:13px;font-weight:700;color:var(--text)"></span>
+                </div>
+                <div id="asgn-subs-body" style="padding:0 20px"></div>
+              </div>
+
+              <div id="asgn-form-view" style="display:none">
+                <div class="tab-toolbar" style="justify-content:space-between">
+                  <button class="btn btn-ghost btn-sm" onclick="showAsgnList()" style="display:flex;align-items:center;gap:6px">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    Back to Assignments
+                  </button>
+                  <span id="asgn-form-heading" style="font-size:13px;font-weight:700;color:var(--text)"></span>
+                </div>
+                <div style="padding:20px 24px">
+                  <div class="form-group">
+                    <label class="form-label">Title</label>
+                    <input class="form-input" id="asgn-form-title" type="text" placeholder="e.g. Lab Report 1" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <div id="asgn-quill-editor"></div>
+                  </div>
+                  <div class="form-row" style="margin-top:16px">
+                    <div class="form-group">
+                      <label class="form-label">Due Date</label>
+                      <input class="form-input" id="asgn-form-date" type="date" />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Due Time</label>
+                      <input class="form-input" id="asgn-form-time" type="time" />
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Max Grade</label>
+                    <input class="form-input" id="asgn-form-maxgrade" type="number" value="100" min="1" style="max-width:140px" />
+                  </div>
+                  <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+                    <button class="btn btn-ghost btn-sm" onclick="showAsgnList()">Cancel</button>
+                    <button class="btn btn-primary btn-sm" id="asgn-form-submit" onclick="submitAsgnForm()">Create Assignment</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="tab-students" class="tab-pane">
+              <div class="students-toolbar">
+                <div class="students-search-wrap">
+                  <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="text" id="students-search" placeholder="Search by name or username…" oninput="filterStudents(this.value)"/>
+                </div>
+                <span class="students-count-badge" id="students-count">${members.length} students</span>
+              </div>
+              <div id="students-list"></div>
+              <div id="students-pagination"></div>
+            </div>
+
+            <div id="tab-about" class="tab-pane">
+              ${canManageEvents ? `<div class="tab-toolbar" style="justify-content:flex-end">
+                <button class="btn btn-primary btn-sm" onclick="openEditAbout()">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  Edit
+                </button>
+              </div>` : ''}
+              <div id="about-read" class="about-body">
+                ${course.description ? `<p>${course.description}</p>` : `<p style="color:var(--text-light);font-style:italic">No description yet.</p>`}
+              </div>
+              <div id="about-edit" style="display:none;padding:20px 26px">
+                <div id="about-quill-editor"></div>
+                <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+                  <button class="btn btn-ghost btn-sm" onclick="closeEditAbout()">Cancel</button>
+                  <button class="btn btn-primary btn-sm" onclick="submitEditAbout()">Save</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: sidebar -->
+        <div>
+          ${role === 'student' ? `
+          <div class="side-card">
+            <div class="side-card-label">Enrolment</div>
+            <div class="side-card-body">${enrollHTML}</div>
+          </div>` : ''}
+
+          <div class="side-card">
+            <div class="side-card-label">Upcoming Events</div>
+            <div class="side-card-body" style="padding:0">
+              ${upcomingEvents.length ? upcomingEvents.slice(0, 3).map(e => {
+                const d     = new Date(e.event_date + 'T00:00:00');
+                const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const time  = e.start_time ? ' · ' + e.start_time : '';
+                return `<div style="display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--border)">
+                  <div style="width:34px;height:34px;border-radius:8px;background:var(--blue-light);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0">
+                    <span style="font-size:8px;font-weight:800;color:var(--blue);letter-spacing:.04em;text-transform:uppercase;line-height:1">${d.toLocaleString('default',{month:'short'}).toUpperCase()}</span>
+                    <span style="font-size:14px;font-weight:800;color:var(--blue);line-height:1">${d.getDate()}</span>
+                  </div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.title}</div>
+                    <div style="font-size:11px;color:var(--text-muted)">${label}${time}</div>
+                  </div>
+                </div>`;
+              }).join('') + (upcomingEvents.length > 3 ? `<div style="padding:10px 18px;font-size:12px;color:var(--blue);font-weight:600;cursor:pointer" onclick="switchTabByName('events')">View all ${upcomingEvents.length} events &rarr;</div>` : '')
+              : `<div style="padding:14px 18px;font-size:12px;color:var(--text-muted)">No upcoming events</div>`}
+            </div>
+          </div>
+
+          <div class="side-card">
+            <div class="side-card-label">Lecturer</div>
+            <div class="side-card-body">${lecturerHTML}</div>
+          </div>
+
+          <div class="side-card">
+            <div class="side-card-label">Details</div>
+            <div class="side-card-body">
+              <div class="detail-row">
+                <span class="detail-label">
+                  <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                  Code
+                </span>
+                <span class="detail-value">${course.ccode || '—'}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">
+                  <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                  Subject
+                </span>
+                <span class="detail-value">${sub.label}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">
+                  <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                  Students
+                </span>
+                <span class="detail-value">${members.length}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">
+                  <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                  Sections
+                </span>
+                <span class="detail-value">${content.length}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+
+    // initialise student pagination
+    _filteredMembers = _allMembers;
+    _studentsPage = 1;
+    renderStudentsPage();
+  }
+
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+    if (name === 'assignments' && CF.user?.role === 'student') loadAssignmentStatuses();
+  }
+
+  function loadAssignmentStatuses() {
+    document.querySelectorAll('.asgn-card[data-aid]').forEach(card => {
+      const aid = card.dataset.aid;
+      const statusEl = card.querySelector('.asgn-sub-status');
+      if (!statusEl || statusEl.dataset.loaded) return;
+      statusEl.dataset.loaded = '1';
+      const maxEl = card.querySelector('.asgn-max');
+      const max = maxEl ? parseFloat(maxEl.textContent.replace('Max grade: ', '')) : 100;
+      api(`/assignments/${aid}/my-submission`).then(r => {
+        if (r.ok && r.data) {
+          const sub = r.data;
+          if (sub.grade !== null) {
+            statusEl.className = 'asgn-sub-status graded';
+            statusEl.textContent = 'Your grade: ' + sub.grade + ' / ' + max;
+          } else {
+            statusEl.className = 'asgn-sub-status submitted';
+            statusEl.textContent = 'Submitted · awaiting grade';
+          }
+        }
+      });
+    });
+  }
+
+  let _aboutQuill = null;
+
+  function openEditAbout() {
+    document.getElementById('about-read').style.display = 'none';
+    document.getElementById('about-edit').style.display = '';
+    if (!_aboutQuill) {
+      _aboutQuill = new Quill('#about-quill-editor', {
+        theme: 'snow',
+        placeholder: 'Write a course description…',
+        modules: { toolbar: [
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          [{ header: [1, 2, 3, false] }],
+          ['link'],
+          ['clean']
+        ]}
+      });
+      const existing = document.getElementById('about-read').innerHTML;
+      const isEmpty = existing.includes('font-style:italic');
+      if (!isEmpty) _aboutQuill.root.innerHTML = existing;
+    }
+    _aboutQuill.focus();
+  }
+
+  function closeEditAbout() {
+    document.getElementById('about-edit').style.display = 'none';
+    document.getElementById('about-read').style.display = '';
+  }
+
+  async function submitEditAbout() {
+    const html = _aboutQuill.root.innerHTML.trim();
+    const isEmpty = _aboutQuill.getText().trim() === '';
+    const description = isEmpty ? '' : html;
+    const r = await api(`/courses/${courseID}`, { method: 'PATCH', body: JSON.stringify({ description }) });
+    toast(r.data?.message || (r.ok ? 'Description updated!' : 'Failed'), r.ok ? 'success' : 'error');
+    if (r.ok) {
+      closeEditAbout();
+      document.getElementById('about-read').innerHTML = description
+        ? description
+        : `<p style="color:var(--text-light);font-style:italic">No description yet.</p>`;
+    }
+  }
+
+  function switchTabByName(name) {
+    const btn = [...document.querySelectorAll('.tab-btn')].find(b => b.textContent.trim().toLowerCase().startsWith(name));
+    if (btn) switchTab(name, btn);
+  }
+
+  function openAddEventModal() { openModal('add-event-modal'); }
+
+  function showContentMain() {
+    document.getElementById('content-main-view').style.display = '';
+    document.getElementById('content-section-view').style.display = 'none';
+    document.getElementById('content-item-view').style.display = 'none';
+    document.getElementById('content-rename-view').style.display = 'none';
+  }
+
+  function openAddSectionView() {
+    document.getElementById('sec-title-inline').value = '';
+    document.getElementById('content-main-view').style.display = 'none';
+    document.getElementById('content-section-view').style.display = '';
+    document.getElementById('content-item-view').style.display = 'none';
+    document.getElementById('content-rename-view').style.display = 'none';
+    setTimeout(() => document.getElementById('sec-title-inline').focus(), 50);
+  }
+
+  function openAddItemView() {
+    api(`/courses/${courseID}/content`).then(r => {
+      if (!r.ok) return toast('Could not load sections', 'error');
+      if (!r.data.length) return toast('Add a section first', 'error');
+      const sel = document.getElementById('item-section-select');
+      sel.innerHTML = r.data.map(s => `<option value="${s.sectionID}">${s.title}</option>`).join('');
+      document.getElementById('item-title').value = '';
+      document.getElementById('item-url').value = '';
+      document.getElementById('content-main-view').style.display = 'none';
+      document.getElementById('content-section-view').style.display = 'none';
+      document.getElementById('content-item-view').style.display = '';
+      document.getElementById('content-rename-view').style.display = 'none';
+      setTimeout(() => document.getElementById('item-title').focus(), 50);
+    });
+  }
+
+  async function submitSectionForm() {
+    const title = document.getElementById('sec-title-inline').value.trim();
+    if (!title) return toast('Please enter a section title', 'error');
+    const r = await api(`/courses/${courseID}/sections`, { method: 'POST', body: JSON.stringify({ title }) });
+    toast(r.data?.message || (r.ok ? 'Section created!' : 'Failed'), r.ok ? 'success' : 'error');
+    if (r.ok) { showContentMain(); loadCourse(); }
+  }
+
+  async function submitAddSection() { return submitSectionForm(); }
+
+  let _renameSectionID = null;
+  function openRenameSection(sectionID, btn) {
+    _renameSectionID = sectionID;
+    const title = btn.closest('.content-group-header').querySelector('.content-group-title').textContent;
+    document.getElementById('rename-sec-title').value = title;
+    document.getElementById('content-main-view').style.display = 'none';
+    document.getElementById('content-section-view').style.display = 'none';
+    document.getElementById('content-item-view').style.display = 'none';
+    document.getElementById('content-rename-view').style.display = '';
+    setTimeout(() => { const el = document.getElementById('rename-sec-title'); el.focus(); el.select(); }, 50);
+  }
+
+  async function submitRenameSection() {
+    const title = document.getElementById('rename-sec-title').value.trim();
+    if (!title) return toast('Please enter a title', 'error');
+    const r = await api(`/sections/${_renameSectionID}`, { method: 'PATCH', body: JSON.stringify({ title }) });
+    toast(r.data?.message || (r.ok ? 'Section renamed!' : 'Failed'), r.ok ? 'success' : 'error');
+    if (r.ok) { showContentMain(); loadCourse(); }
+  }
+
+  async function deleteSection(sectionID) {
+    if (!confirm('Delete this section and all its items? This cannot be undone.')) return;
+    const r = await api(`/sections/${sectionID}`, { method: 'DELETE' });
+    toast(r.data?.message || (r.ok ? 'Section deleted' : 'Failed'), r.ok ? 'success' : 'error');
+    if (r.ok) loadCourse();
+  }
+
+  function openAddItemModal() { openAddItemView(); }
+
+  async function submitAddItem() {
+    const sectionID = document.getElementById('item-section-select').value;
+    const type  = document.getElementById('item-type').value;
+    const title = document.getElementById('item-title').value.trim();
+    const url   = document.getElementById('item-url').value.trim();
+    if (!title) return toast('Please enter a title', 'error');
+    if (!sectionID) return toast('Please select a section', 'error');
+    const r = await api(`/sections/${sectionID}/content`, { method: 'POST', body: JSON.stringify({ type, title, url: url || null }) });
+    toast(r.data?.message || (r.ok ? 'Item added!' : 'Failed'), r.ok ? 'success' : 'error');
+    if (r.ok) { showContentMain(); document.getElementById('item-title').value = ''; document.getElementById('item-url').value = ''; loadCourse(); }
+  }
+
+  async function submitAddEvent() {
+    const body = {
+      title:       document.getElementById('aev-title').value.trim(),
+      description: document.getElementById('aev-desc').value.trim(),
+      event_date:  document.getElementById('aev-date').value,
+      start_time:  document.getElementById('aev-start').value || null,
+      end_time:    document.getElementById('aev-end').value   || null,
+    };
+    if (!body.title || !body.event_date) return toast('Title and date are required', 'error');
+    const r = await api(`/courses/${courseID}/events`, { method: 'POST', body: JSON.stringify(body) });
+    toast(r.data?.message || (r.ok ? 'Event created!' : 'Failed'), r.ok ? 'success' : 'error');
+    if (r.ok) { closeModal('add-event-modal'); loadCourse(); }
+  }
+
+  async function submitCourseAddForum() {
+    const title = document.getElementById('caf-title').value.trim();
+    if (!title) return toast('Please enter a forum title', 'error');
+    const r = await api(`/courses/${courseID}/forums`, { method: 'POST', body: JSON.stringify({ title }) });
+    toast(r.data?.message || (r.ok ? 'Forum created!' : 'Failed'), r.ok ? 'success' : 'error');
+    if (r.ok) { closeModal('course-add-forum-modal'); document.getElementById('caf-title').value = ''; loadCourse(); }
+  }
+
+  // ── ASSIGNMENTS ──
+  let _asgnQuill = null, _editingAsgnID = null, _asgnData = [];
+
+  function _getAsgnQuill() {
+    if (!_asgnQuill) {
+      _asgnQuill = new Quill('#asgn-quill-editor', {
+        theme: 'snow',
+        placeholder: 'Assignment instructions…',
+        modules: { toolbar: [
+          ['bold', 'italic', 'underline'],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          ['link'], ['clean']
+        ]}
+      });
+    }
+    return _asgnQuill;
+  }
+
+  function _showAsgnForm(heading, title, descHTML, date, time, maxgrade, asgnID) {
+    _editingAsgnID = asgnID != null ? asgnID : null;
+    document.getElementById('asgn-form-heading').textContent = heading;
+    document.getElementById('asgn-form-title').value = title || '';
+    document.getElementById('asgn-form-date').value = date || '';
+    document.getElementById('asgn-form-time').value = time || '';
+    document.getElementById('asgn-form-maxgrade').value = maxgrade || 100;
+    document.getElementById('asgn-form-submit').textContent = asgnID ? 'Save Changes' : 'Create Assignment';
+    document.getElementById('asgn-list-view').style.display = 'none';
+    document.getElementById('asgn-subs-view').style.display = 'none';
+    document.getElementById('asgn-form-view').style.display = '';
+    const q = _getAsgnQuill();
+    const isHTML = descHTML && /<[a-z][\s\S]*>/i.test(descHTML);
+    if (isHTML) {
+      q.root.innerHTML = descHTML;
+    } else {
+      q.setText(descHTML || '');
+    }
+    document.getElementById('asgn-form-title').focus();
+  }
+
+  function openNewAssignment() {
+    _showAsgnForm('New Assignment', '', '', '', '', 100, null);
+  }
+
+  function openEditAssignment(asgnID) {
+    const a = _asgnData.find(x => x.assignmentID == asgnID);
+    if (!a) return;
+    let date = '', time = '';
+    if (a.duedate) {
+      const parts = a.duedate.replace('T', ' ').split(' ');
+      date = parts[0];
+      time = parts[1] ? parts[1].slice(0, 5) : '';
+    }
+    _showAsgnForm('Edit Assignment', a.title, a.description || '', date, time, a.maxgrade, asgnID);
+  }
+
+  async function submitAsgnForm() {
+    const title    = document.getElementById('asgn-form-title').value.trim();
+    const date     = document.getElementById('asgn-form-date').value;
+    const time     = document.getElementById('asgn-form-time').value;
+    const maxgrade = parseFloat(document.getElementById('asgn-form-maxgrade').value) || 100;
+    const q        = _getAsgnQuill();
+    const descHTML = q.getText().trim() === '' ? '' : q.root.innerHTML.trim();
+    if (!title) return toast('Please enter a title', 'error');
+    const duedate  = date ? (time ? date + 'T' + time + ':00' : date) : null;
+    const body     = { title, description: descHTML, duedate, maxgrade };
+    const r = _editingAsgnID
+      ? await api(`/assignments/${_editingAsgnID}`, { method: 'PATCH', body: JSON.stringify(body) })
+      : await api(`/courses/${courseID}/assignments`, { method: 'POST', body: JSON.stringify(body) });
+    toast(r.data?.message || (r.ok ? (_editingAsgnID ? 'Assignment updated!' : 'Assignment created!') : 'Failed'), r.ok ? 'success' : 'error');
+    if (r.ok) { showAsgnList(); loadCourse(); }
+  }
+
+  let _submitAsgnID = null;
+  function openSubmitModal(assignmentID, title, maxgrade) {
+    _submitAsgnID = assignmentID;
+    document.getElementById('submit-asgn-title').textContent = 'Submit — ' + title;
+    document.getElementById('submit-asgn-max').textContent = maxgrade;
+    document.getElementById('submit-asgn-link').value = '';
+    openModal('submit-assignment-modal');
+    // Load existing submission status
+    api(`/assignments/${assignmentID}/my-submission`).then(r => {
+      const statusEl = document.getElementById('asgn-status-' + assignmentID);
+      if (r.ok && r.data) {
+        const sub = r.data;
+        if (statusEl) {
+          if (sub.grade !== null) {
+            statusEl.className = 'asgn-sub-status graded';
+            statusEl.textContent = 'Graded: ' + sub.grade + ' / ' + maxgrade;
+          } else {
+            statusEl.className = 'asgn-sub-status submitted';
+            statusEl.textContent = 'Submitted · awaiting grade';
+          }
+        }
+        document.getElementById('submit-asgn-link').value = sub.filepath || '';
+      }
+    });
+  }
+
+  async function submitAssignment() {
+    const link = document.getElementById('submit-asgn-link').value.trim();
+    if (!link) return toast('Please paste your submission link', 'error');
+    const r = await api(`/courses/${courseID}/assignments/${_submitAsgnID}/submit`, { method: 'POST', body: JSON.stringify({ filepath: link }) });
+    toast(r.data?.message || (r.ok ? 'Submitted!' : 'Failed'), r.ok ? 'success' : 'error');
+    if (r.ok) { closeModal('submit-assignment-modal'); loadCourse(); }
+  }
+
+  function showAsgnList() {
+    document.getElementById('asgn-list-view').style.display = '';
+    document.getElementById('asgn-subs-view').style.display = 'none';
+    document.getElementById('asgn-form-view').style.display = 'none';
+  }
+
+  async function openSubmissions(assignmentID, title) {
+    document.getElementById('asgn-subs-heading').textContent = title;
+    document.getElementById('asgn-subs-body').innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted)">Loading…</div>';
+    document.getElementById('asgn-list-view').style.display = 'none';
+    document.getElementById('asgn-subs-view').style.display = '';
+    const r = await api(`/assignments/${assignmentID}/submissions`);
+    if (!r.ok) { document.getElementById('asgn-subs-body').innerHTML = '<div style="padding:20px;color:#ef4444">Failed to load submissions.</div>'; return; }
+    const subs = r.data;
+    if (!subs.length) {
+      document.getElementById('asgn-subs-body').innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-muted)">No submissions yet.</div>';
+      return;
+    }
+    const colors = ['#3b82f6','#10b981','#8b5cf6','#f59e0b','#ef4444','#0ea5e9'];
+    document.getElementById('asgn-subs-body').innerHTML = subs.map((s, i) => {
+      const initial = (s.fname || s.username || '?')[0].toUpperCase();
+      const gradeVal = s.grade !== null ? s.grade : '';
+      const gradedLabel = s.grade !== null ? '<span style="font-size:11px;color:#10b981;font-weight:600;margin-left:6px">Graded: ' + s.grade + '</span>' : '';
+      return '<div class="sub-row">'
+        + '<div class="sub-avatar" style="background:' + colors[i % colors.length] + '">' + initial + '</div>'
+        + '<div class="sub-info">'
+        + '<div class="sub-name">' + s.fname + ' ' + (s.lname || '') + gradedLabel + '</div>'
+        + (s.filepath ? '<a class="sub-link" href="' + s.filepath + '" target="_blank">' + s.filepath + '</a>' : '<span style="font-size:12px;color:var(--text-muted)">No link provided</span>')
+        + '</div>'
+        + '<div class="sub-grade-wrap">'
+        + '<input class="sub-grade-input" type="number" min="0" placeholder="—" value="' + gradeVal + '" id="grade-input-' + s.subID + '" />'
+        + '<button class="sub-grade-save" onclick="submitGrade(' + s.subID + ', this)">Save</button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  async function submitGrade(subID, btn) {
+    const input = document.getElementById('grade-input-' + subID);
+    const grade = parseFloat(input.value);
+    if (isNaN(grade)) return toast('Enter a valid grade', 'error');
+    btn.disabled = true; btn.textContent = '…';
+    const r = await api(`/submissions/${subID}/grade`, { method: 'POST', body: JSON.stringify({ grade }) });
+    btn.disabled = false; btn.textContent = 'Save';
+    toast(r.data?.message || (r.ok ? 'Grade saved!' : 'Failed'), r.ok ? 'success' : 'error');
+    if (r.ok) {
+      const row = input.closest('.sub-row');
+      const existing = row.querySelector('.graded-label');
+      if (existing) existing.textContent = 'Graded: ' + grade;
+      else {
+        const nameEl = row.querySelector('.sub-name');
+        const lbl = document.createElement('span');
+        lbl.className = 'graded-label';
+        lbl.style.cssText = 'font-size:11px;color:#10b981;font-weight:600;margin-left:6px';
+        lbl.textContent = 'Graded: ' + grade;
+        nameEl.appendChild(lbl);
+      }
+    }
+  }
+
+  const PAGE_SIZE = 20;
+  let _allMembers = [], _filteredMembers = [], _studentsPage = 1, _viewerRole = null;
+
+  function renderStudentsPage() {
+    const start = (_studentsPage - 1) * PAGE_SIZE;
+    const page  = _filteredMembers.slice(start, start + PAGE_SIZE);
+    const list  = document.getElementById('students-list');
+    const pager = document.getElementById('students-pagination');
+    if (!list) return;
+
+    if (!_filteredMembers.length) {
+      list.innerHTML = '<div class="empty-panel"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>No students found.</div>';
+      pager.innerHTML = '';
+      return;
+    }
+
+    const canSeeID = _viewerRole === 'lecturer' || _viewerRole === 'admin';
+    list.innerHTML = page.map((m, i) => {
+      const idx = start + i + 1;
+      return `<div class="student-row">
+        <div class="student-avatar" style="background:${avatarColor(m.fname)}">${(m.fname||'?')[0].toUpperCase()}</div>
+        <div class="student-info">
+          <div class="student-name">${m.fname} ${m.lname || ''}</div>
+          ${canSeeID ? `<div class="student-username">ID: ${m.userID} &nbsp;·&nbsp; @${m.username}</div>` : ''}
+        </div>
+        ${canSeeID ? `<span class="student-index">${idx}</span>` : ''}
+      </div>`;
+    }).join('');
+
+    const totalPages = Math.ceil(_filteredMembers.length / PAGE_SIZE);
+    if (totalPages <= 1) { pager.innerHTML = ''; return; }
+
+    const pages = [];
+    for (let p = 1; p <= totalPages; p++) {
+      if (p === 1 || p === totalPages || Math.abs(p - _studentsPage) <= 1) {
+        pages.push(p);
+      } else if (pages[pages.length - 1] !== '…') {
+        pages.push('…');
+      }
+    }
+
+    pager.innerHTML = '<div class="students-pager">'
+      + '<button class="pager-btn" ' + (_studentsPage === 1 ? 'disabled' : '') + ' onclick="goStudentsPage(' + (_studentsPage - 1) + ')">'
+      + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>'
+      + pages.map(p => p === '…'
+        ? '<span class="pager-ellipsis">…</span>'
+        : '<button class="pager-btn' + (p === _studentsPage ? ' active' : '') + '" onclick="goStudentsPage(' + p + ')">' + p + '</button>'
+      ).join('')
+      + '<button class="pager-btn" ' + (_studentsPage === totalPages ? 'disabled' : '') + ' onclick="goStudentsPage(' + (_studentsPage + 1) + ')">'
+      + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>'
+      + '</div>';
+  }
+
+  function goStudentsPage(p) {
+    _studentsPage = p;
+    renderStudentsPage();
+    document.getElementById('tab-students').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function filterStudents(q) {
+    const term = q.toLowerCase().trim();
+    _filteredMembers = term ? _allMembers.filter(m =>
+      (m.fname + ' ' + (m.lname||'')).toLowerCase().includes(term) ||
+      (m.username||'').toLowerCase().includes(term)
+    ) : _allMembers;
+    _studentsPage = 1;
+    renderStudentsPage();
+    const badge = document.getElementById('students-count');
+    if (badge) badge.textContent = term ? `${_filteredMembers.length} result${_filteredMembers.length !== 1 ? 's' : ''}` : `${_allMembers.length} students`;
+  }
+
+  async function enroll() {
+    const r = await api(`/courses/${courseID}/enroll`, { method: 'POST', body: JSON.stringify({ studID: CF.user.userID }) });
+    toast(r.data?.message || (r.ok ? 'Enrolled!' : 'Error'), r.ok ? 'success' : 'error');
+    if (r.ok) loadCourse();
+  }
+
+  async function unenroll() {
+    const r = await api(`/courses/${courseID}/enroll`, { method: 'DELETE', body: JSON.stringify({ studID: CF.user.userID }) });
+    toast(r.data?.message || (r.ok ? 'Course dropped' : 'Error'), r.ok ? 'success' : 'error');
+    if (r.ok) loadCourse();
+  }
+
+  function renderError(msg) {
+    document.getElementById('page-content').innerHTML =
+      `<div class="empty-state"><p>${msg}</p><a href="/courses.html" class="btn btn-outline" style="margin-top:12px">Back to Courses</a></div>`;
+  }
+
+  init();
+</script>
+</body>
+</html>

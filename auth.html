@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CourseFlow - Sign In</title>
+<link rel="stylesheet" href="/styles.css" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .auth-scene {
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+  }
+  @media (max-width: 860px)  { .auth-scene { grid-template-columns: 1fr; } }
+  @media (min-width: 1280px) { .auth-scene { grid-template-columns: 1.1fr .9fr; } }
+  @media (min-width: 1600px) { .auth-scene { grid-template-columns: 1.2fr .8fr; } }
+
+  /* ════════ LEFT ════════ */
+  .auth-left {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 56px 60px;
+    background: linear-gradient(150deg, #060d1f 0%, #0f1d3a 50%, #0d1117 100%);
+  }
+  @media (max-width: 860px)  { .auth-left { display: none; } }
+  @media (min-width: 1280px) { .auth-left { padding: 72px 80px; } }
+  @media (min-width: 1600px) { .auth-left { padding: 88px 100px; } }
+
+  .orb {
+    position: absolute; border-radius: 50%;
+    filter: blur(100px); pointer-events: none;
+  }
+  .orb-1 { width:520px;height:520px;background:#1d4ed8;opacity:.28;top:-180px;left:-140px;animation:drift1 16s ease-in-out infinite alternate; }
+  .orb-2 { width:380px;height:380px;background:#6d28d9;opacity:.22;bottom:-120px;right:-60px;animation:drift2 13s ease-in-out infinite alternate; }
+  .orb-3 { width:280px;height:280px;background:#0d9488;opacity:.18;top:50%;left:45%;animation:drift3 18s ease-in-out infinite alternate; }
+  @keyframes drift1 { from{transform:translate(0,0)scale(1)}  to{transform:translate(30px,20px)scale(1.1)} }
+  @keyframes drift2 { from{transform:translate(0,0)scale(1)}  to{transform:translate(-20px,30px)scale(1.08)} }
+  @keyframes drift3 { from{transform:translate(0,0)scale(1)}  to{transform:translate(15px,-25px)scale(1.12)} }
+
+  /* floating SVG icons */
+  .floaters { position:absolute;inset:0;overflow:hidden;pointer-events:none; }
+  .floater {
+    position: absolute;
+    animation: float-icon linear infinite;
+  }
+  .floater svg { display:block; stroke:rgba(255,255,255,0.10); fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
+  @keyframes float-icon {
+    0%   { transform: translateY(100vh) rotate(-6deg); opacity:0; }
+    8%   { opacity: 0.6; }
+    85%  { opacity: 0.4; }
+    100% { transform: translateY(-80px) rotate(8deg); opacity:0; }
+  }
+
+  .auth-grid {
+    position:absolute;inset:0;
+    background-image: linear-gradient(rgba(255,255,255,.025)1px,transparent 1px), linear-gradient(90deg,rgba(255,255,255,.025)1px,transparent 1px);
+    background-size:52px 52px;
+  }
+
+  .auth-left-content { position:relative;z-index:2; }
+
+  .fade-up { opacity:0;transform:translateY(18px);animation:fadeUp .65s ease forwards; }
+  @keyframes fadeUp { to{opacity:1;transform:translateY(0)} }
+  @keyframes spin { to{transform:rotate(360deg)} }
+
+  /* brand */
+  .al-brand { display:flex;align-items:center;gap:14px;margin-bottom:48px;animation-delay:.1s; }
+  .al-logo {
+    width:46px;height:46px;
+    border-radius:13px;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 8px 28px rgba(37,99,235,.5);flex-shrink:0;
+    position:relative;overflow:hidden;
+    background:#1e3a8a;
+  }
+  .al-logo::before {
+    content:'';
+    position:absolute;
+    width:160%;height:160%;
+    top:-30%;left:-30%;
+    background:conic-gradient(#2563eb,#7c3aed,#0d9488,#60a5fa,#2563eb);
+    animation:logo-spin 3.5s linear infinite;
+    border-radius:50%;
+  }
+  .al-logo::after {
+    content:'';position:absolute;inset:2.5px;border-radius:10px;
+    background:linear-gradient(135deg,#1e3a8a 0%,#312e81 100%);
+  }
+  .al-logo svg { width:22px;height:22px;stroke:#fff;position:relative;z-index:1; }
+  @keyframes logo-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  .al-brand-name { font-size:24px;font-weight:800;letter-spacing:-.6px;color:#fff; }
+
+  /* slideshow */
+  .al-slide-wrap { margin-bottom:28px;animation-delay:.2s;min-height:150px; }
+  .al-slide { display:none; }
+  .al-slide.active { display:block;animation:slide-in .45s ease forwards; }
+  @keyframes slide-in { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  .al-slide-title {
+    font-size:44px;font-weight:900;letter-spacing:-2px;line-height:1.05;
+    color:#fff;margin-bottom:14px;
+  }
+  .al-slide-title span {
+    background:linear-gradient(90deg,#60a5fa,#a78bfa);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  }
+  .al-slide-sub { font-size:15px;color:rgba(255,255,255,.45);line-height:1.65;max-width:320px; }
+  @media (min-width: 1280px) {
+    .al-slide-title { font-size:52px; }
+    .al-slide-sub   { font-size:16px;max-width:380px; }
+    .al-brand-name  { font-size:28px; }
+    .al-logo        { width:54px;height:54px; }
+    .al-logo svg    { width:26px;height:26px; }
+    .al-logo::after { inset:3px;border-radius:12px; }
+  }
+  @media (min-width: 1600px) {
+    .al-slide-title { font-size:62px;letter-spacing:-2.5px; }
+    .al-slide-sub   { font-size:17px;max-width:440px; }
+    .al-brand-name  { font-size:32px; }
+    .al-logo        { width:60px;height:60px; }
+    .al-logo svg    { width:30px;height:30px; }
+  }
+
+  /* dots */
+  .al-dots { display:flex;gap:6px;margin-bottom:40px;animation-delay:.3s; }
+  .al-dot { width:6px;height:6px;border-radius:99px;background:rgba(255,255,255,.2);transition:all .3s;cursor:pointer; }
+  .al-dot.active { width:20px;background:#2563eb; }
+
+  /* status strip */
+  .al-status {
+    display:flex;flex-direction:column;gap:10px;
+    padding:12px 16px;
+    background:rgba(255,255,255,.03);
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:10px;
+    animation-delay:.4s;
+  }
+  .al-status-row { display:flex;align-items:center;gap:8px; }
+  .al-status-pulse {
+    width:6px;height:6px;border-radius:50%;flex-shrink:0;
+    background:#22c55e;
+    box-shadow:0 0 0 0 rgba(34,197,94,.5);
+    animation:pulse-ring 2s ease-in-out infinite;
+  }
+  @keyframes pulse-ring {
+    0%   { box-shadow:0 0 0 0 rgba(34,197,94,.5); }
+    70%  { box-shadow:0 0 0 6px rgba(34,197,94,0); }
+    100% { box-shadow:0 0 0 0 rgba(34,197,94,0); }
+  }
+  .al-status-label { font-size:11px;font-weight:500;color:rgba(255,255,255,.35);letter-spacing:.02em; }
+  .al-status-divider { height:1px;background:rgba(255,255,255,.05); }
+  .al-status-stats { display:flex;gap:20px; }
+  .al-stat-item { display:flex;flex-direction:column;gap:1px; }
+  .al-stat-value {
+    font-size:15px;font-weight:700;letter-spacing:-.4px;
+    background:linear-gradient(90deg,#60a5fa,#a78bfa);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  }
+  .al-stat-label { font-size:10px;color:rgba(255,255,255,.25);font-weight:500; }
+  @media (min-width: 1280px) {
+    .al-stat-value { font-size:17px; }
+    .al-stat-label { font-size:11px; }
+    .al-status     { padding:14px 20px; }
+    .al-slide-wrap { min-height:170px; }
+    .al-brand      { margin-bottom:56px; }
+    .al-dots       { margin-bottom:48px; }
+  }
+  @media (min-width: 1600px) {
+    .al-stat-value { font-size:19px; }
+    .al-slide-wrap { min-height:200px; }
+    .al-brand      { margin-bottom:64px; }
+  }
+
+  /* ════════ RIGHT ════════ */
+  .auth-right {
+    display:flex;align-items:center;justify-content:center;
+    padding:40px 48px;
+    background:#fff;
+    overflow:hidden;
+  }
+  .auth-card { width:100%;max-width:360px; }
+  @media (min-width: 1280px) {
+    .auth-right  { padding: 48px 64px; }
+    .auth-card   { max-width:400px; }
+    .ac-heading  { font-size:28px; }
+    .ag-input, .ag-select { padding:13px 14px;font-size:15px; }
+    .ag-input-wrap .ag-input { padding-left:42px; }
+    .ag-input-wrap > svg    { width:16px;height:16px;left:14px; }
+    .ag-btn      { padding:15px;font-size:15px; }
+  }
+  @media (min-width: 1600px) {
+    .auth-card   { max-width:440px; }
+    .ac-heading  { font-size:32px; }
+    .ag-input, .ag-select { padding:15px 16px;font-size:15px; }
+    .ag-input-wrap .ag-input { padding-left:44px; }
+    .ag-btn      { padding:16px;font-size:15px; }
+  }
+
+  /* step bar */
+  .step-bar { display:flex;align-items:center;margin-bottom:32px; }
+  .step-node { display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0; }
+  .step-circle {
+    width:34px;height:34px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;
+    background:#f1f5f9;color:#94a3b8;
+    transition:all .3s;border:2px solid #e2e8f0;
+  }
+  .step-circle.active { background:#2563eb;color:#fff;border-color:#2563eb;box-shadow:0 0 0 5px rgba(37,99,235,.12); }
+  .step-circle.done   { background:#22c55e;color:#fff;border-color:#22c55e; }
+  .step-label { font-size:10px;font-weight:600;color:#cbd5e1;white-space:nowrap;letter-spacing:.03em;text-transform:uppercase; }
+  .step-label.active { color:#2563eb; }
+  .step-label.done   { color:#22c55e; }
+  .step-line { flex:1;height:2px;background:#f1f5f9;margin:0 8px;margin-bottom:22px;transition:background .3s;border-radius:2px; }
+  .step-line.done { background:#22c55e; }
+
+  .ac-heading { font-size:24px;font-weight:800;letter-spacing:-.6px;color:#0f172a;margin-bottom:4px; }
+  .ac-sub { font-size:13px;color:#94a3b8;margin-bottom:28px;line-height:1.5; }
+
+  .ag-group { margin-bottom:16px; }
+  .ag-label {
+    display:flex;align-items:center;gap:6px;
+    font-size:12px;font-weight:600;color:#374151;
+    margin-bottom:7px;letter-spacing:.01em;
+  }
+  .ag-label svg { width:13px;height:13px;stroke:#9ca3af;flex-shrink:0; }
+
+  /* input wrapper for icon inside */
+  .ag-input-wrap { position:relative; }
+  .ag-input-wrap > svg {
+    position:absolute;left:13px;top:50%;transform:translateY(-50%);
+    width:15px;height:15px;stroke:#9ca3af;pointer-events:none;
+  }
+  .ag-input-wrap .ag-input { padding-left:38px; }
+
+  .ag-input, .ag-select {
+    width:100%;
+    background:#fafafa;
+    border:1.5px solid #e5e7eb;
+    border-radius:12px;
+    padding:12px 14px;
+    font-size:14px;font-weight:500;
+    color:#111827;outline:none;font-family:inherit;
+    transition:border-color .18s,box-shadow .18s,background .18s;
+  }
+  .ag-input::placeholder { color:#d1d5db; }
+  .ag-input:focus,.ag-select:focus {
+    border-color:#2563eb;background:#fff;
+    box-shadow:0 0 0 4px rgba(37,99,235,.08);
+  }
+  .ag-select { appearance:none;cursor:pointer; }
+  .ag-row { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+  .ag-hint { font-size:11px;color:#b0b8c4;margin-top:5px;padding-left:2px; }
+
+  .ag-btn {
+    width:100%;margin-top:8px;padding:14px;
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    border:none;border-radius:12px;
+    font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;
+    box-shadow:0 4px 20px rgba(37,99,235,.3);
+    transition:transform .15s,box-shadow .15s;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    letter-spacing:.01em;
+  }
+  .ag-btn:hover { transform:translateY(-1px);box-shadow:0 8px 28px rgba(37,99,235,.4); }
+  .ag-btn:active { transform:translateY(0); }
+  .ag-btn svg { width:16px;height:16px;stroke:#fff; }
+
+  .ag-btn-ghost {
+    width:100%;margin-top:8px;padding:12px;
+    background:#f8fafc;border:1.5px solid #e5e7eb;border-radius:12px;
+    font-size:13px;font-weight:600;color:#6b7280;cursor:pointer;font-family:inherit;
+    transition:border-color .15s,color .15s,background .15s;
+    display:flex;align-items:center;justify-content:center;gap:6px;
+  }
+  .ag-btn-ghost:hover { border-color:#cbd5e1;color:#111827;background:#f1f5f9; }
+  .ag-btn-ghost svg { width:14px;height:14px;stroke:currentColor; }
+
+  .ag-switch { text-align:center;font-size:12.5px;color:#9ca3af;margin-top:20px; }
+  .ag-switch a { color:#2563eb;font-weight:600;cursor:pointer;text-decoration:none; }
+  .ag-switch a:hover { color:#1d4ed8; }
+
+  /* remember me */
+  .ag-remember { display:flex;align-items:center;justify-content:space-between;margin-bottom:16px; }
+  .ag-remember-label { display:flex;align-items:center;gap:8px;font-size:12.5px;color:#6b7280;cursor:pointer;user-select:none; }
+  .pill-toggle { position:relative;width:36px;height:20px;flex-shrink:0; }
+  .pill-toggle input { opacity:0;width:0;height:0;position:absolute; }
+  .pill-track {
+    position:absolute;inset:0;border-radius:99px;
+    background:#e5e7eb;transition:background .2s;cursor:pointer;
+  }
+  .pill-track::after {
+    content:'';position:absolute;top:3px;left:3px;
+    width:14px;height:14px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);
+    transition:transform .2s cubic-bezier(.4,0,.2,1);
+  }
+  .pill-toggle input:checked + .pill-track { background:#2563eb; }
+  .pill-toggle input:checked + .pill-track::after { transform:translateX(16px); }
+
+  /* cursor glow */
+  #cursor-glow {
+    position:fixed;pointer-events:none;z-index:1;
+    width:320px;height:320px;border-radius:50%;
+    background:radial-gradient(circle,rgba(37,99,235,.18) 0%,transparent 70%);
+    transform:translate(-50%,-50%);
+    transition:opacity .3s;opacity:0;
+  }
+
+  /* login success modal */
+  .login-modal-overlay {
+    position:fixed;inset:0;z-index:100;
+    background:rgba(6,13,31,.7);
+    backdrop-filter:blur(6px);
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;pointer-events:none;
+    transition:opacity .3s ease;
+  }
+  .login-modal-overlay.show { opacity:1;pointer-events:auto; }
+  .login-modal {
+    background:#fff;border-radius:20px;
+    padding:40px 36px;width:320px;text-align:center;
+    box-shadow:0 24px 60px rgba(0,0,0,.18);
+    transform:translateY(16px) scale(.97);
+    transition:transform .35s cubic-bezier(.4,0,.2,1);
+  }
+  .login-modal-overlay.show .login-modal { transform:translateY(0) scale(1); }
+
+  .lm-avatar {
+    width:64px;height:64px;border-radius:50%;
+    background:linear-gradient(135deg,#2563eb,#7c3aed);
+    display:flex;align-items:center;justify-content:center;
+    font-size:26px;font-weight:800;color:#fff;
+    margin:0 auto 16px;
+    box-shadow:0 8px 24px rgba(37,99,235,.35);
+  }
+  .lm-title { font-size:20px;font-weight:800;color:#0f172a;letter-spacing:-.4px;margin-bottom:4px; }
+  .lm-role  { font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:24px; }
+
+  .lm-progress-wrap {
+    height:4px;background:#f1f5f9;border-radius:99px;overflow:hidden;margin-bottom:14px;
+  }
+  .lm-progress-bar {
+    height:100%;width:0%;border-radius:99px;
+    background:linear-gradient(90deg,#2563eb,#7c3aed);
+    transition:width .08s linear;
+  }
+  .lm-status { font-size:12.5px;color:#94a3b8;font-weight:500; }
+
+  /* role card micro-animations */
+  .role-card { transition:border-color .18s,background .18s,transform .18s,box-shadow .18s; }
+  .role-card:hover { border-color:#93c5fd;transform:translateY(-2px);box-shadow:0 6px 16px rgba(37,99,235,.1); }
+  .role-card.selected { border-color:#2563eb;background:#eff6ff;transform:translateY(-2px);box-shadow:0 6px 20px rgba(37,99,235,.15); }
+  .role-card svg { transition:transform .2s,stroke .18s; }
+  .role-card:hover svg { transform:scale(1.15); }
+  .role-card.selected svg { stroke:#2563eb;transform:scale(1.15); }
+
+  /* step slide transitions */
+  .step-viewport { position:relative;overflow:hidden; }
+  .reg-step { display:block;position:absolute;top:0;left:0;width:100%;opacity:0;pointer-events:none;transform:translateX(60px); }
+  .reg-step.active { position:relative;opacity:1;pointer-events:auto;transform:translateX(0);transition:transform .32s cubic-bezier(.4,0,.2,1),opacity .28s ease; }
+  .reg-step.exit-left  { opacity:0;transform:translateX(-60px);transition:transform .28s cubic-bezier(.4,0,.2,1),opacity .22s ease;pointer-events:none; }
+  .reg-step.exit-right { opacity:0;transform:translateX(60px);transition:transform .28s cubic-bezier(.4,0,.2,1),opacity .22s ease;pointer-events:none; }
+  .reg-step.enter-right{ opacity:0;transform:translateX(60px); }
+  .reg-step.enter-left { opacity:0;transform:translateX(-60px); }
+
+  /* password eye toggle */
+  .pw-wrap { position:relative; }
+  .pw-wrap .ag-input { padding-right:40px; }
+  .pw-eye {
+    position:absolute;right:13px;top:50%;transform:translateY(-50%);
+    background:none;border:none;padding:0;cursor:pointer;
+    color:#9ca3af;display:flex;align-items:center;
+    transition:color .15s;
+  }
+  .pw-eye:hover { color:#6b7280; }
+  .pw-eye svg { width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round; }
+
+  .panel-wrap { transition:opacity .25s ease; }
+  .panel-wrap.hidden { display:none;opacity:0;pointer-events:none; }
+  .panel-wrap.visible { display:block;opacity:1; }
+
+  /* role cards */
+  .role-cards { display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:4px; }
+  .role-card {
+    padding:12px 8px;border-radius:10px;
+    border:1.5px solid #e5e7eb;
+    text-align:center;cursor:pointer;
+    transition:border-color .18s,background .18s;
+    background:#fff;
+  }
+  .role-card:hover { border-color:#93c5fd; }
+  .role-card.selected { border-color:#2563eb;background:#eff6ff; }
+  .role-card svg { width:20px;height:20px;stroke:#6b7280;margin:0 auto 6px;display:block; }
+  .role-card.selected svg { stroke:#2563eb; }
+  .role-card-label { font-size:12px;font-weight:600;color:#374151; }
+  .role-card.selected .role-card-label { color:#2563eb; }
+</style>
+</head>
+<body>
+
+<div class="auth-scene">
+
+  <div id="cursor-glow"></div>
+  <!-- ════════ LEFT ════════ -->
+  <div class="auth-left" id="auth-left">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="floaters" id="floaters"></div>
+    <div class="auth-grid"></div>
+
+    <div class="auth-left-content">
+
+      <div class="al-brand fade-up">
+        <div class="al-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        </div>
+        <div class="al-brand-name">CourseFlow</div>
+      </div>
+
+      <div class="al-slide-wrap fade-up">
+        <div class="al-slide active" id="slide-0">
+          <div class="al-slide-title">Your academic<br>hub, <span>reimagined.</span></div>
+          <div class="al-slide-sub">Everything you need — courses, grades, forums and schedules — in one place.</div>
+        </div>
+        <div class="al-slide" id="slide-1">
+          <div class="al-slide-title">200+ courses,<br><span>one platform.</span></div>
+          <div class="al-slide-sub">Browse the full curriculum, enroll instantly and track your progress.</div>
+        </div>
+        <div class="al-slide" id="slide-2">
+          <div class="al-slide-title">Connect with<br><span>your class.</span></div>
+          <div class="al-slide-sub">Academic forums, live threads and discussions for every course.</div>
+        </div>
+        <div class="al-slide" id="slide-3">
+          <div class="al-slide-title">Stay on top<br>of <span>deadlines.</span></div>
+          <div class="al-slide-sub">Schedules, calendar events and assignment due dates always in view.</div>
+        </div>
+      </div>
+
+      <div class="al-dots fade-up">
+        <div class="al-dot active" onclick="goSlide(0)"></div>
+        <div class="al-dot" onclick="goSlide(1)"></div>
+        <div class="al-dot" onclick="goSlide(2)"></div>
+        <div class="al-dot" onclick="goSlide(3)"></div>
+      </div>
+
+      <div class="al-status fade-up">
+        <div class="al-status-row">
+          <div class="al-status-pulse"></div>
+          <div class="al-status-label">All systems operational</div>
+        </div>
+        <div class="al-status-divider"></div>
+        <div class="al-status-stats">
+          <div class="al-stat-item">
+            <div class="al-stat-value">100k+</div>
+            <div class="al-stat-label">Students enrolled</div>
+          </div>
+          <div class="al-stat-item">
+            <div class="al-stat-value">200+</div>
+            <div class="al-stat-label">Active courses</div>
+          </div>
+          <div class="al-stat-item">
+            <div class="al-stat-value">24/7</div>
+            <div class="al-stat-label">Availability</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════ RIGHT ════════ -->
+  <div class="auth-right">
+    <div class="auth-card">
+
+      <!-- SIGN IN -->
+      <div class="panel-wrap visible" id="panel-login">
+        <div class="ac-heading">Welcome back</div>
+        <div class="ac-sub">Sign in to continue to your dashboard</div>
+
+        <div class="ag-group">
+          <label class="ag-label">Username</label>
+          <div class="ag-input-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input class="ag-input" id="l-username" type="text" placeholder="Enter your username" autocomplete="username" />
+          </div>
+        </div>
+        <div class="ag-group">
+          <label class="ag-label">Password</label>
+          <div class="ag-input-wrap pw-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input class="ag-input" id="l-password" type="password" placeholder="Enter your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" />
+            <button class="pw-eye" type="button" onclick="togglePw('l-password',this)" tabindex="-1" aria-label="Show password">
+              <svg id="eye-l" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="ag-remember">
+          <label class="ag-remember-label">
+            <label class="pill-toggle">
+              <input type="checkbox" id="l-remember" />
+              <span class="pill-track"></span>
+            </label>
+            Remember me
+          </label>
+        </div>
+        <button class="ag-btn" id="login-btn" onclick="doLogin()">
+          <span id="login-btn-text">Sign In</span>
+          <span id="login-btn-spinner" style="display:none">
+            <svg style="animation:spin .7s linear infinite;width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round" viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+          </span>
+          <svg id="login-btn-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+        <div class="ag-switch">Don't have an account? <a onclick="showRegister()">Register free</a></div>
+      </div>
+
+      <!-- REGISTER (multi-step) -->
+      <div class="panel-wrap hidden" id="panel-register">
+
+        <div class="step-bar" id="step-bar">
+          <div class="step-node">
+            <div class="step-circle active" id="sd-1">1</div>
+            <div class="step-label active" id="sl-lbl-1">Name</div>
+          </div>
+          <div class="step-line" id="sl-1"></div>
+          <div class="step-node">
+            <div class="step-circle" id="sd-2">2</div>
+            <div class="step-label" id="sl-lbl-2">Account</div>
+          </div>
+          <div class="step-line" id="sl-2"></div>
+          <div class="step-node">
+            <div class="step-circle" id="sd-3">3</div>
+            <div class="step-label" id="sl-lbl-3">Security</div>
+          </div>
+        </div>
+
+        <div class="step-viewport" id="step-viewport">
+        <!-- Step 1 -->
+        <div class="reg-step active" id="step-1">
+          <div class="ac-heading">Let's get started</div>
+          <div class="ac-sub">What should we call you?</div>
+          <div class="ag-row">
+            <div class="ag-group">
+              <label class="ag-label">First Name</label>
+              <input class="ag-input" id="r-fname" type="text" placeholder="e.g. Jaheim" autocomplete="given-name" />
+            </div>
+            <div class="ag-group">
+              <label class="ag-label">Last Name</label>
+              <input class="ag-input" id="r-lname" type="text" placeholder="e.g. Campbell" autocomplete="family-name" />
+            </div>
+          </div>
+          <button class="ag-btn" onclick="nextStep(2)">
+            Continue
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+          <div class="ag-switch">Already have an account? <a onclick="showLogin()">Sign in</a></div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="reg-step" id="step-2">
+          <div class="ac-heading">Account details</div>
+          <div class="ac-sub">Choose a username and enter your email</div>
+          <div class="ag-group">
+            <label class="ag-label">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Username
+            </label>
+            <input class="ag-input" id="r-username" type="text" placeholder="e.g. jaheim_c" autocomplete="username" />
+            <div class="ag-hint">This is what you'll use to log in</div>
+          </div>
+          <div class="ag-group">
+            <label class="ag-label">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              Email
+            </label>
+            <input class="ag-input" id="r-email" type="email" placeholder="your@email.com" autocomplete="email" />
+          </div>
+          <button class="ag-btn" onclick="nextStep(3)">
+            Continue
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+          <button class="ag-btn-ghost" onclick="nextStep(1)">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Back
+          </button>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="reg-step" id="step-3">
+          <div class="ac-heading">Almost there!</div>
+          <div class="ac-sub">Set your password and pick your role</div>
+          <div class="ag-group">
+            <label class="ag-label">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Password
+            </label>
+            <div class="pw-wrap">
+              <input class="ag-input" id="r-password" type="password" placeholder="Create a strong password" autocomplete="new-password" />
+              <button class="pw-eye" type="button" onclick="togglePw('r-password',this)" tabindex="-1" aria-label="Show password">
+                <svg id="eye-r" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;margin-bottom:4px">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#0369a1">Registering as Student</div>
+              <div style="font-size:11px;color:#64748b;margin-top:1px">Lecturers and admins are added by an administrator</div>
+            </div>
+          </div>
+          <button class="ag-btn" onclick="doRegister()">
+            Create Account
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+          <button class="ag-btn-ghost" onclick="nextStep(2)">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Back
+          </button>
+        </div>
+        </div><!-- /step-viewport -->
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="login-modal-overlay" id="login-modal">
+  <div class="login-modal">
+    <div class="lm-avatar" id="lm-avatar">?</div>
+    <div class="lm-title" id="lm-title">Welcome back!</div>
+    <div class="lm-role"  id="lm-role">Student</div>
+    <div class="lm-progress-wrap">
+      <div class="lm-progress-bar" id="lm-bar"></div>
+    </div>
+    <div class="lm-status" id="lm-status">Signing you in...</div>
+  </div>
+</div>
+<div id="toast"></div>
+<script src="/app.js"></script>
+<script>
+  if (isLoggedIn()) window.location.href = '/dashboard.html';
+
+  /* ── floating SVG icons ── */
+  const FLOAT_ICONS = [
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 3h6v11l3.3 5.5A1 1 0 0 1 17.4 21H6.6a1 1 0 0 1-.9-1.5L9 14V3z"/><line x1="9" y1="3" x2="15" y2="3"/></svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/></svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+  ];
+  (function() {
+    const container = document.getElementById('floaters');
+    for (let i = 0; i < 12; i++) {
+      const el = document.createElement('div');
+      el.className = 'floater';
+      const size = Math.random() * 24 + 20;
+      const dur  = Math.random() * 14 + 16;
+      // negative delay puts icon mid-journey at page load so screen is never empty
+      const delay = -(Math.random() * dur);
+      el.style.cssText = `left:${Math.random()*90}%;width:${size}px;height:${size}px;animation-duration:${dur}s;animation-delay:${delay}s`;
+      el.innerHTML = FLOAT_ICONS[Math.floor(Math.random() * FLOAT_ICONS.length)];
+      container.appendChild(el);
+    }
+  })();
+
+  /* ── slideshow ── */
+  let slideIdx = 0;
+  function goSlide(n) {
+    document.getElementById('slide-' + slideIdx).classList.remove('active');
+    document.querySelectorAll('.al-dot')[slideIdx].classList.remove('active');
+    slideIdx = n;
+    document.getElementById('slide-' + slideIdx).classList.add('active');
+    document.querySelectorAll('.al-dot')[slideIdx].classList.add('active');
+  }
+  setInterval(() => goSlide((slideIdx + 1) % 4), 4000);
+
+  /* ── panel switch ── */
+  function showRegister() {
+    document.getElementById('panel-login').classList.replace('visible','hidden');
+    document.getElementById('panel-register').classList.replace('hidden','visible');
+    goStep(1);
+  }
+  function showLogin() {
+    document.getElementById('panel-register').classList.replace('visible','hidden');
+    document.getElementById('panel-login').classList.replace('hidden','visible');
+  }
+
+  /* ── steps ── */
+  let currentStep = 1;
+  function goStep(n) {
+    const prev = document.getElementById('step-' + currentStep);
+    const next = document.getElementById('step-' + n);
+    const goingForward = n > currentStep;
+
+    // animate out
+    prev.classList.remove('active');
+    prev.classList.add(goingForward ? 'exit-left' : 'exit-right');
+    setTimeout(() => prev.classList.remove('exit-left','exit-right'), 320);
+
+    // position incoming off-screen then slide in
+    next.classList.add(goingForward ? 'enter-right' : 'enter-left');
+    next.style.display = 'block';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      next.classList.remove('enter-right','enter-left');
+      next.classList.add('active');
+    }));
+
+    // update step bar
+    [1,2,3].forEach(i => {
+      const circle = document.getElementById('sd-' + i);
+      const lbl    = document.getElementById('sl-lbl-' + i);
+      circle.classList.remove('active','done');
+      lbl.classList.remove('active','done');
+      if (i < n)        { circle.classList.add('done'); circle.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><polyline points="20 6 9 17 4 12"/></svg>'; lbl.classList.add('done'); }
+      else if (i === n) { circle.classList.add('active'); circle.textContent = i; lbl.classList.add('active'); }
+      else              { circle.textContent = i; }
+    });
+    [1,2].forEach(i => document.getElementById('sl-' + i).classList.toggle('done', i < n));
+    currentStep = n;
+  }
+  function nextStep(n) {
+    if (n > currentStep) {
+      if (currentStep === 1 && (!document.getElementById('r-fname').value.trim() || !document.getElementById('r-lname').value.trim()))
+        return toast('Please enter your full name', 'error');
+      if (currentStep === 2 && (!document.getElementById('r-username').value.trim() || !document.getElementById('r-email').value.trim()))
+        return toast('Please fill in all fields', 'error');
+    }
+    goStep(n);
+  }
+
+  /* ── cursor glow ── */
+  const glow = document.getElementById('cursor-glow');
+  const leftPanel = document.getElementById('auth-left');
+  leftPanel.addEventListener('mousemove', e => {
+    glow.style.opacity = '1';
+    glow.style.left = e.clientX + 'px';
+    glow.style.top  = e.clientY + 'px';
+  });
+  leftPanel.addEventListener('mouseleave', () => { glow.style.opacity = '0'; });
+
+  /* ── remember me pre-fill ── */
+  const remembered = localStorage.getItem('cf_remember');
+  if (remembered) {
+    document.getElementById('l-username').value = remembered;
+    document.getElementById('l-remember').checked = true;
+  }
+
+  /* ── role cards ── */
+  /* ── password visibility ── */
+  function togglePw(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const showing = input.type === 'text';
+    input.type = showing ? 'password' : 'text';
+    btn.querySelector('svg').innerHTML = showing
+      ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+      : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+    btn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+  }
+
+  /* ── auth ── */
+  async function doLogin() {
+    const username = document.getElementById('l-username').value.trim();
+    const password = document.getElementById('l-password').value;
+    if (!username || !password) return toast('Please fill in all fields', 'error');
+
+    const btn     = document.getElementById('login-btn');
+    const txt     = document.getElementById('login-btn-text');
+    const spinner = document.getElementById('login-btn-spinner');
+    const arrow   = document.getElementById('login-btn-arrow');
+    btn.disabled = true;
+    txt.textContent = 'Signing in...';
+    spinner.style.display = '';
+    arrow.style.display   = 'none';
+
+    const r = await api('/login', { method:'POST', body:JSON.stringify({ username, password }) });
+
+    btn.disabled = false;
+    txt.textContent = 'Sign In';
+    spinner.style.display = 'none';
+    arrow.style.display   = '';
+
+    if (!r.ok) return toast(r.data.error || 'Login failed', 'error');
+
+    const payload = decodeJWT(r.data.access_token);
+    const userID  = parseInt(payload.sub);
+    saveSession(r.data.access_token, { userID, username, role: payload.role, fname: '', lname: '' });
+
+    // fetch full profile to get fname/lname
+    const pu = await fetch(`/users/${userID}`, { headers: { Authorization: 'Bearer ' + r.data.access_token } });
+    if (pu.ok) {
+      const profile = await pu.json();
+      saveSession(r.data.access_token, { userID, username, role: payload.role, fname: profile.fname || '', lname: profile.lname || '', email: profile.email || '' });
+    }
+    if (document.getElementById('l-remember').checked) localStorage.setItem('cf_remember', username);
+
+    // show success modal
+    const displayName = (CF.user?.fname || username);
+    document.getElementById('lm-avatar').textContent = displayName.charAt(0).toUpperCase();
+    document.getElementById('lm-title').textContent  = 'Welcome back, ' + displayName + '!';
+    document.getElementById('lm-role').textContent   = payload.role.charAt(0).toUpperCase() + payload.role.slice(1);
+    document.getElementById('lm-status').textContent = 'Signing you in...';
+    document.getElementById('lm-bar').style.width    = '0%';
+    document.getElementById('login-modal').classList.add('show');
+
+    // animate progress bar over ~1.5s then redirect
+    let pct = 0;
+    const interval = setInterval(() => {
+      pct += 2;
+      document.getElementById('lm-bar').style.width = pct + '%';
+      if (pct >= 60) document.getElementById('lm-status').textContent = 'Loading your dashboard...';
+      if (pct >= 100) {
+        clearInterval(interval);
+        document.getElementById('lm-status').textContent = 'Done!';
+        setTimeout(() => window.location.href = '/dashboard.html', 200);
+      }
+    }, 30);
+  }
+
+  async function doRegister() {
+    if (!document.getElementById('r-password').value) return toast('Please enter a password', 'error');
+    const body = {
+      username: document.getElementById('r-username').value.trim(),
+      email:    document.getElementById('r-email').value.trim(),
+      fname:    document.getElementById('r-fname').value.trim(),
+      lname:    document.getElementById('r-lname').value.trim(),
+      password: document.getElementById('r-password').value,
+      role:     'student',
+    };
+    const r = await api('/register', { method:'POST', body:JSON.stringify(body) });
+    if (!r.ok) return toast(r.data.message || 'Registration failed', 'error');
+    toast('Account created! Please sign in.', 'success');
+    showLogin();
+  }
+</script>
+</body>
+</html>

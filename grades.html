@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CourseFlow — My Grades</title>
+<link rel="stylesheet" href="/styles.css" />
+<style>
+  /* ── SUMMARY CARDS ── */
+  .grades-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  @media (max-width: 900px) { .grades-summary { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .grades-summary { grid-template-columns: 1fr; } }
+
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 22px;
+    box-shadow: var(--shadow-sm);
+    display: flex; flex-direction: column; gap: 6px;
+    position: relative; overflow: hidden;
+  }
+  .summary-card::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+    background: var(--sc-color, var(--blue));
+  }
+  .summary-card-label {
+    font-size: 11px; font-weight: 700; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--text-muted);
+  }
+  .summary-card-value {
+    font-size: 28px; font-weight: 800; color: var(--text); line-height: 1;
+  }
+  .summary-card-sub {
+    font-size: 12px; color: var(--text-muted);
+  }
+  .summary-card-icon {
+    position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+    opacity: .07; width: 52px; height: 52px;
+  }
+  .summary-card-icon svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ── GRADE SELECTOR BAR ── */
+  .grade-tab-bar {
+    display: flex; align-items: center; gap: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .grade-tab-btn {
+    flex: 1; min-width: 120px;
+    padding: 11px 16px;
+    font-size: 13px; font-weight: 600; color: var(--text-muted);
+    background: none; border: none; border-right: 1px solid var(--border);
+    cursor: pointer; transition: background .13s, color .13s;
+    text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .grade-tab-btn:last-child { border-right: none; }
+  .grade-tab-btn:hover { background: var(--border-light); color: var(--text); }
+  .grade-tab-btn.active { background: var(--blue); color: #fff; }
+
+  /* ── COURSE OVERVIEW (all tab) ── */
+  .course-overview-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;
+    margin-bottom: 0;
+  }
+  @media (max-width: 700px) { .course-overview-grid { grid-template-columns: 1fr; } }
+
+  .course-overview-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: box-shadow .15s, border-color .15s;
+  }
+  .course-overview-card:hover { box-shadow: var(--shadow); border-color: var(--blue); }
+
+  .coc-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .coc-icon {
+    width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--blue-light);
+  }
+  .coc-icon svg { width: 18px; height: 18px; stroke: var(--blue); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .coc-info { flex: 1; min-width: 0; }
+  .coc-name { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .coc-code { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .coc-avg {
+    font-size: 15px; font-weight: 800; padding: 5px 13px;
+    border-radius: 20px; white-space: nowrap; flex-shrink: 0;
+    background: var(--blue-light); color: var(--blue);
+  }
+  .coc-avg.high { background: #dcfce7; color: #16a34a; }
+  .coc-avg.mid  { background: #fef9c3; color: #854d0e; }
+  .coc-avg.low  { background: #fee2e2; color: #dc2626; }
+
+  .coc-bar-wrap { padding: 12px 18px 14px; }
+  .coc-bar-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+  .coc-bar-track { height: 7px; background: var(--border-light); border-radius: 10px; overflow: hidden; }
+  .coc-bar-fill  { height: 100%; border-radius: 10px; background: var(--blue); transition: width .4s; }
+  .coc-bar-fill.high { background: #16a34a; }
+  .coc-bar-fill.mid  { background: #ca8a04; }
+  .coc-bar-fill.low  { background: #dc2626; }
+  .coc-footer { display: flex; align-items: center; justify-content: space-between; padding: 0 18px 12px; }
+  .coc-count { font-size: 11px; color: var(--text-muted); }
+  .coc-view-btn { font-size: 11px; font-weight: 700; color: var(--blue); background: none; border: none; cursor: pointer; padding: 0; }
+
+  /* ── INDIVIDUAL COURSE DETAIL ── */
+  .course-detail-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .cdp-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .cdp-title { font-size: 15px; font-weight: 800; color: var(--text); }
+  .cdp-sub   { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+  .cdp-avg-big {
+    font-size: 22px; font-weight: 800;
+    padding: 6px 18px; border-radius: 24px;
+    background: var(--blue-light); color: var(--blue); flex-shrink: 0;
+  }
+  .cdp-avg-big.high { background: #dcfce7; color: #16a34a; }
+  .cdp-avg-big.mid  { background: #fef9c3; color: #854d0e; }
+  .cdp-avg-big.low  { background: #fee2e2; color: #dc2626; }
+
+  .grade-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 13px 22px;
+    border-bottom: 1px solid var(--border);
+    transition: background .12s;
+  }
+  .grade-row:last-child { border-bottom: none; }
+  .grade-row:hover { background: var(--border-light); }
+  .grade-row-num {
+    width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+    background: var(--border-light); color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+  }
+  .grade-row-info { flex: 1; min-width: 0; }
+  .grade-row-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .grade-row-date  { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .grade-row-bar-wrap { width: 100px; flex-shrink: 0; }
+  .grade-row-bar-track { height: 5px; background: var(--border-light); border-radius: 6px; overflow: hidden; margin-top: 4px; }
+  .grade-row-bar-fill  { height: 100%; border-radius: 6px; background: var(--blue); }
+  .grade-row-bar-fill.high { background: #16a34a; }
+  .grade-row-bar-fill.mid  { background: #ca8a04; }
+  .grade-row-bar-fill.low  { background: #dc2626; }
+  .grade-pill {
+    font-size: 12px; font-weight: 700; padding: 4px 12px;
+    border-radius: 12px; white-space: nowrap; flex-shrink: 0;
+    background: var(--border-light); color: var(--text);
+  }
+  .grade-pill.high { background: #dcfce7; color: #16a34a; }
+  .grade-pill.mid  { background: #fef9c3; color: #854d0e; }
+  .grade-pill.low  { background: #fee2e2; color: #dc2626; }
+
+  .empty-grades {
+    padding: 48px 24px; text-align: center;
+    font-size: 13px; color: var(--text-muted);
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title">My Grades</div>
+        <div class="topbar-sub">Assignment grades and academic performance</div>
+      </div>
+      <div class="topbar-right">
+        <span class="role-chip" id="tb-role-chip"></span>
+        <a class="topbar-avatar-btn" href="/profile.html">
+          <div class="user-avatar" id="tb-avatar">?</div>
+          <span id="tb-username"></span>
+        </a>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- Summary cards -->
+      <div class="grades-summary" id="summary-cards" style="display:none">
+        <div class="summary-card" style="--sc-color:#2563eb">
+          <div class="summary-card-icon"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+          <div class="summary-card-label">Overall Average</div>
+          <div class="summary-card-value" id="sc-overall">—</div>
+          <div class="summary-card-sub">Across all courses</div>
+        </div>
+        <div class="summary-card" style="--sc-color:#7c3aed">
+          <div class="summary-card-icon"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+          <div class="summary-card-label">Courses Graded</div>
+          <div class="summary-card-value" id="sc-courses">—</div>
+          <div class="summary-card-sub">With at least one grade</div>
+        </div>
+        <div class="summary-card" style="--sc-color:#059669">
+          <div class="summary-card-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div class="summary-card-label">Assignments Graded</div>
+          <div class="summary-card-value" id="sc-assignments">—</div>
+          <div class="summary-card-sub">Total graded submissions</div>
+        </div>
+        <div class="summary-card" style="--sc-color:#d97706">
+          <div class="summary-card-icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+          <div class="summary-card-label">Best Course</div>
+          <div class="summary-card-value" id="sc-best">—</div>
+          <div class="summary-card-sub" id="sc-best-name">—</div>
+        </div>
+      </div>
+
+      <!-- Tab bar: All + one per course -->
+      <div class="grade-tab-bar" id="grade-tab-bar" style="display:none"></div>
+
+      <!-- Content area -->
+      <div id="grades-area">
+        <div class="loading"><div class="spinner"></div> Loading grades…</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="/app.js"></script>
+<script>
+  if (!requireAuth()) {}
+  if (CF.user?.role !== 'student') { window.location.href = '/dashboard.html'; }
+  renderSidebar('grades');
+
+  let _gradesData = [];
+  let _activeTab = 'all';
+
+  function gradeClass(pct) {
+    return pct >= 70 ? 'high' : pct < 50 ? 'low' : 'mid';
+  }
+
+  async function loadGrades() {
+    const area = document.getElementById('grades-area');
+    const [gradesRes, enrollRes] = await Promise.all([
+      api('/students/' + CF.user.userID + '/grades'),
+      api('/courses/student/' + CF.user.userID)
+    ]);
+    if (!gradesRes.ok) { area.innerHTML = '<div class="empty-state"><p>Could not load grades.</p></div>'; return; }
+
+    const { courses: gradedCourses, overall_average } = gradesRes.data;
+    const enrolledCourses = enrollRes.ok ? enrollRes.data : [];
+
+    // Merge: start from all enrolled courses, attach grades where available
+    const gradedMap = {};
+    gradedCourses.forEach(c => { gradedMap[c.courseID] = c; });
+
+    _gradesData = enrolledCourses.map(c => gradedMap[c.courseID] || {
+      courseID: c.courseID, ccode: c.ccode, cname: c.cname,
+      grades: [], course_average: null
+    });
+
+    // ── Summary cards ──
+    const totalAssignments = gradedCourses.reduce((s, c) => s + c.grades.length, 0);
+    const best = gradedCourses.length ? [...gradedCourses].sort((a, b) => b.course_average - a.course_average)[0] : null;
+    const overall = overall_average !== null ? parseFloat(overall_average) : null;
+    const cls = overall !== null ? gradeClass(overall) : '';
+    const colors = { high: '#16a34a', mid: '#ca8a04', low: '#dc2626', '': 'var(--blue)' };
+
+    document.getElementById('sc-overall').textContent     = overall !== null ? overall.toFixed(1) + '%' : '—';
+    document.getElementById('sc-overall').style.color     = colors[cls];
+    document.getElementById('sc-courses').textContent     = gradedCourses.length + ' / ' + _gradesData.length;
+    document.getElementById('sc-assignments').textContent = totalAssignments;
+    document.getElementById('sc-best').textContent        = best ? parseFloat(best.course_average).toFixed(1) + '%' : '—';
+    document.getElementById('sc-best-name').textContent   = best ? best.ccode : '—';
+    document.getElementById('summary-cards').style.display = '';
+
+    // ── Tab bar ──
+    const bar = document.getElementById('grade-tab-bar');
+    bar.style.display = '';
+    bar.innerHTML = '<button class="grade-tab-btn active" data-tab="all" onclick="switchGradeTab(\'all\', this)">All Courses</button>'
+      + _gradesData.map(c => '<button class="grade-tab-btn" data-tab="' + c.courseID + '" onclick="switchGradeTab(' + c.courseID + ', this)" title="' + c.cname + '">' + c.ccode + '</button>').join('');
+
+    renderAllTab();
+  }
+
+  function switchGradeTab(tab, btn) {
+    _activeTab = tab;
+    document.querySelectorAll('.grade-tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+    if (tab === 'all') renderAllTab();
+    else renderCourseTab(tab);
+  }
+
+  function renderAllTab() {
+    const area = document.getElementById('grades-area');
+    area.innerHTML = '<div class="course-overview-grid">'
+      + _gradesData.map(c => {
+          const hasGrades = c.grades.length > 0;
+          const avg = hasGrades ? parseFloat(c.course_average) : null;
+          const cls = avg !== null ? gradeClass(avg) : '';
+          const pct = avg !== null ? avg.toFixed(1) : null;
+          return '<div class="course-overview-card" onclick="switchGradeTab(' + c.courseID + ', document.querySelector(\'[data-tab=\\"' + c.courseID + '\\"]\'))">'
+            + '<div class="coc-header">'
+            + '<div class="coc-icon"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>'
+            + '<div class="coc-info"><div class="coc-name">' + c.cname + '</div><div class="coc-code">' + c.ccode + '</div></div>'
+            + (hasGrades ? '<div class="coc-avg ' + cls + '">' + pct + '%</div>' : '<div class="coc-avg" style="background:var(--border-light);color:var(--text-muted)">No grades</div>')
+            + '</div>'
+            + '<div class="coc-bar-wrap">'
+            + '<div class="coc-bar-label"><span>Course Average</span><span>' + (pct ? pct + '%' : '—') + '</span></div>'
+            + '<div class="coc-bar-track"><div class="coc-bar-fill ' + cls + '" style="width:' + (avg !== null ? Math.min(avg, 100) : 0) + '%"></div></div>'
+            + '</div>'
+            + '<div class="coc-footer">'
+            + '<span class="coc-count">' + (hasGrades ? c.grades.length + ' assignment' + (c.grades.length !== 1 ? 's' : '') + ' graded' : 'No graded assignments yet') + '</span>'
+            + '<button class="coc-view-btn">View details →</button>'
+            + '</div>'
+            + '</div>';
+        }).join('')
+      + '</div>';
+  }
+
+  function renderCourseTab(courseID) {
+    const c = _gradesData.find(x => String(x.courseID) === String(courseID));
+    if (!c) return;
+    const area = document.getElementById('grades-area');
+    const hasGrades = c.grades.length > 0;
+    const avg = hasGrades ? parseFloat(c.course_average) : null;
+    const cls = avg !== null ? gradeClass(avg) : '';
+
+    area.innerHTML = '<div class="course-detail-panel">'
+      + '<div class="cdp-header">'
+      + '<div><div class="cdp-title">' + c.cname + '</div><div class="cdp-sub">' + c.ccode + ' · ' + (hasGrades ? c.grades.length + ' graded assignment' + (c.grades.length !== 1 ? 's' : '') : 'No graded assignments yet') + '</div></div>'
+      + (hasGrades ? '<div class="cdp-avg-big ' + cls + '">' + avg.toFixed(1) + '%</div>' : '<div class="cdp-avg-big" style="background:var(--border-light);color:var(--text-muted);font-size:14px">Pending</div>')
+      + '</div>'
+      + (hasGrades
+          ? c.grades.map((g, i) => {
+              const pct = g.grade / g.maxgrade * 100;
+              const gcls = gradeClass(pct);
+              const graded = g.graded_at ? new Date(g.graded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
+              return '<div class="grade-row">'
+                + '<div class="grade-row-num">' + (i + 1) + '</div>'
+                + '<div class="grade-row-info">'
+                + '<div class="grade-row-title">' + g.title + '</div>'
+                + (graded ? '<div class="grade-row-date">Graded ' + graded + '</div>' : '')
+                + '</div>'
+                + '<div class="grade-row-bar-wrap">'
+                + '<div style="font-size:10px;color:var(--text-muted);text-align:right">' + pct.toFixed(0) + '%</div>'
+                + '<div class="grade-row-bar-track"><div class="grade-row-bar-fill ' + gcls + '" style="width:' + Math.min(pct, 100) + '%"></div></div>'
+                + '</div>'
+                + '<span class="grade-pill ' + gcls + '">' + g.grade + ' / ' + g.maxgrade + '</span>'
+                + '</div>';
+            }).join('')
+          : '<div class="empty-grades">No grades have been posted for this course yet.</div>')
+      + '</div>';
+  }
+
+  loadGrades();
+</script>
+</body>
+</html>

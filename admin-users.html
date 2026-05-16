@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CourseFlow — Manage Users</title>
+<link rel="stylesheet" href="/styles.css" />
+<style>
+  /* ── SUMMARY STRIP ── */
+  .role-summary-strip {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .role-stat-chip {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    flex: 1; min-width: 150px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.15s;
+  }
+  .role-stat-chip:hover { box-shadow: var(--shadow); }
+  .role-stat-icon {
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .role-stat-icon svg { width: 16px; height: 16px; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+  .role-stat-count { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; line-height: 1; }
+  .role-stat-label { font-size: 11px; color: var(--text-muted); font-weight: 500; margin-top: 2px; }
+
+  /* ── ROLE FILTER PILLS ── */
+  .role-pills {
+    display: flex; gap: 6px; flex-wrap: wrap;
+  }
+  .role-pill {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    font-size: 12px; font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .role-pill:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-light); }
+  .role-pill.active-all    { background: var(--text); color: #fff; border-color: var(--text); }
+  .role-pill.active-admin  { background: var(--amber); color: #fff; border-color: var(--amber); }
+  .role-pill.active-lecturer { background: var(--purple); color: #fff; border-color: var(--purple); }
+  .role-pill.active-student  { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+  /* ── SEARCH FIELD ── */
+  .search-field {
+    position: relative; display: flex; align-items: center;
+  }
+  .search-field svg {
+    position: absolute; left: 10px;
+    width: 15px; height: 15px;
+    stroke: var(--text-muted); fill: none;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    pointer-events: none;
+  }
+  .search-field input {
+    padding: 7px 12px 7px 34px;
+    font-size: 13px; width: 240px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg); color: var(--text);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .search-field input:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.08);
+    background: var(--surface);
+  }
+  .search-field input::placeholder { color: var(--text-light); }
+
+  /* ── TABLE AVATAR ── */
+  .tbl-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #fff;
+    flex-shrink: 0;
+  }
+
+  .table-footer {
+    padding: 14px 24px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title">Users</div>
+        <div class="topbar-sub">View and manage all system users</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary btn-sm" onclick="openAddUserModal()" style="white-space:nowrap">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+          Add User
+        </button>
+        <span class="role-chip admin" id="tb-role-chip">admin</span>
+        <a class="topbar-avatar-btn" href="/profile.html">
+          <div class="user-avatar" id="tb-avatar">?</div>
+          <span id="tb-username"></span>
+        </a>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- ROLE SUMMARY STRIP -->
+      <div class="role-summary-strip">
+        <div class="role-stat-chip">
+          <div class="role-stat-icon" style="background:var(--amber-light)">
+            <svg viewBox="0 0 24 24" style="stroke:var(--amber)"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div>
+            <div class="role-stat-count" id="count-admin">—</div>
+            <div class="role-stat-label">Admins</div>
+          </div>
+        </div>
+        <div class="role-stat-chip">
+          <div class="role-stat-icon" style="background:var(--purple-light)">
+            <svg viewBox="0 0 24 24" style="stroke:var(--purple)"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/><path d="M16 11l4 4-4 4"/></svg>
+          </div>
+          <div>
+            <div class="role-stat-count" id="count-lecturer">—</div>
+            <div class="role-stat-label">Lecturers</div>
+          </div>
+        </div>
+        <div class="role-stat-chip">
+          <div class="role-stat-icon" style="background:var(--blue-light)">
+            <svg viewBox="0 0 24 24" style="stroke:var(--blue)"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div>
+            <div class="role-stat-count" id="count-student">—</div>
+            <div class="role-stat-label">Students</div>
+          </div>
+        </div>
+        <div class="role-stat-chip" style="background:var(--bg);border-style:dashed;cursor:default">
+          <div style="color:var(--text-muted)">
+            <div class="role-stat-count" id="count-total" style="font-size:18px">—</div>
+            <div class="role-stat-label">Total Users</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- USERS PANEL -->
+      <div class="panel">
+        <div class="panel-header" style="flex-wrap:wrap;gap:12px">
+          <div class="panel-title">All Users</div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-left:auto">
+            <div class="role-pills">
+              <button class="role-pill active-all" id="pill-all"      onclick="setRoleFilter('')">All</button>
+              <button class="role-pill"             id="pill-admin"    onclick="setRoleFilter('admin')">Admin</button>
+              <button class="role-pill"             id="pill-lecturer" onclick="setRoleFilter('lecturer')">Lecturer</button>
+              <button class="role-pill"             id="pill-student"  onclick="setRoleFilter('student')">Student</button>
+            </div>
+            <div class="search-field">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input id="user-search" type="text" placeholder="Search name or username…" oninput="filterUsers()" />
+            </div>
+          </div>
+        </div>
+        <div id="users-table"><div class="loading"><div class="spinner"></div> Loading users…</div></div>
+        <div class="table-footer">
+          <span style="font-size:13px;color:var(--text-muted)" id="users-count"></span>
+          <div class="pagination" id="users-pagination"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="add-user-modal">
+  <div class="modal" style="width:460px">
+    <div class="modal-header" style="background:linear-gradient(135deg,#0d1424,#1e3a5f);border-radius:var(--radius) var(--radius) 0 0;padding:18px 24px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+        </div>
+        <div>
+          <div class="modal-title" style="color:#fff">Add User</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.5)">Create a new account manually</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeAddUserModal()" style="color:rgba(255,255,255,0.6)">✕</button>
+    </div>
+    <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">First Name</label>
+          <input class="form-input" id="au-fname" type="text" placeholder="e.g. Jane" />
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Last Name</label>
+          <input class="form-input" id="au-lname" type="text" placeholder="e.g. Smith" />
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Username</label>
+        <input class="form-input" id="au-username" type="text" placeholder="e.g. jsmith01" />
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Email</label>
+        <input class="form-input" id="au-email" type="email" placeholder="e.g. jane@example.com" />
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Password</label>
+        <input class="form-input" id="au-password" type="password" placeholder="Set a temporary password" />
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Role</label>
+        <select class="form-select" id="au-role">
+          <option value="student">Student</option>
+          <option value="lecturer">Lecturer</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <button class="btn btn-primary w-full" style="justify-content:center;padding:11px;margin-top:4px" onclick="addUser()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+        Create Account
+      </button>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+<script src="/app.js"></script>
+<script>
+  if (!requireRole('admin')) {}
+  renderSidebar('admin-users');
+
+  let allUsers = [], filteredUsers = [], usersPage = 1;
+  let currentRoleFilter = '';
+  const PAGE_SIZE = 20;
+
+  const avatarColors = ['#2563eb','#7c3aed','#16a34a','#d97706','#0d9488','#dc2626','#0369a1','#be185d'];
+  function avatarColor(str) { let h=0; for(let c of (str||'A')) h=(h*31+c.charCodeAt(0))&0xffff; return avatarColors[h%avatarColors.length]; }
+
+  async function init() {
+    const r = await api('/users');
+    allUsers = r.ok ? r.data : [];
+    filteredUsers = allUsers;
+
+    // Update summary counts
+    const admins    = allUsers.filter(u => u.role === 'admin').length;
+    const lecturers = allUsers.filter(u => u.role === 'lecturer').length;
+    const students  = allUsers.filter(u => u.role === 'student').length;
+    document.getElementById('count-admin').textContent    = admins.toLocaleString();
+    document.getElementById('count-lecturer').textContent = lecturers.toLocaleString();
+    document.getElementById('count-student').textContent  = students.toLocaleString();
+    document.getElementById('count-total').textContent    = allUsers.length.toLocaleString();
+
+    renderUsersPage();
+  }
+
+  function setRoleFilter(role) {
+    currentRoleFilter = role;
+    // Update pill styles
+    document.getElementById('role-filter').value = role; // keep hidden select in sync if present
+    const pills = { '': 'all', 'admin': 'admin', 'lecturer': 'lecturer', 'student': 'student' };
+    ['all','admin','lecturer','student'].forEach(r => {
+      const el = document.getElementById(`pill-${r}`);
+      if (!el) return;
+      el.className = 'role-pill';
+      if ((r === 'all' && role === '') || r === role) {
+        el.classList.add(`active-${r === 'all' ? 'all' : role}`);
+      }
+    });
+    filterUsers();
+  }
+
+  function filterUsers() {
+    const role = currentRoleFilter;
+    const q    = document.getElementById('user-search').value.toLowerCase();
+    filteredUsers = allUsers.filter(u => {
+      if (role && u.role !== role) return false;
+      if (!q) return true;
+      const full = ((u.fname||'') + ' ' + (u.lname||'')).toLowerCase();
+      const fullRev = ((u.lname||'') + ' ' + (u.fname||'')).toLowerCase();
+      return u.username.toLowerCase().includes(q) ||
+             full.includes(q) ||
+             fullRev.includes(q) ||
+             (u.email||'').toLowerCase().includes(q);
+    });
+    usersPage = 1; renderUsersPage();
+  }
+
+  function renderUsersPage() {
+    const start = (usersPage-1)*PAGE_SIZE, slice = filteredUsers.slice(start, start+PAGE_SIZE), total = filteredUsers.length;
+    document.getElementById('users-count').textContent = total === 0 ? 'No users found' : `Showing ${start+1}–${Math.min(start+PAGE_SIZE,total)} of ${total.toLocaleString()}`;
+
+    if (!slice.length) {
+      document.getElementById('users-table').innerHTML = `
+        <div class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--border)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <p>No users match the current filter</p>
+        </div>`;
+      return;
+    }
+
+    document.getElementById('users-table').innerHTML = `
+      <table>
+        <thead><tr><th>User</th><th>Full Name</th><th>Email</th><th>Role</th></tr></thead>
+        <tbody>${slice.map(u => {
+          const initials = ((u.fname||'?')[0]+(u.lname||'')[0]).toUpperCase();
+          const color = avatarColor(u.username);
+          return `<tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px">
+                <div class="tbl-avatar" style="background:${color}">${initials}</div>
+                <div>
+                  <div style="font-weight:700;font-size:13px">${u.username}</div>
+                  <div style="font-size:11px;color:var(--text-light)">ID #${u.userID}</div>
+                </div>
+              </div>
+            </td>
+            <td style="font-size:13px">${(u.fname||'')} ${(u.lname||'')}</td>
+            <td style="color:var(--text-muted);font-size:12px">${u.email||'—'}</td>
+            <td><span class="role-chip ${u.role}">${u.role}</span></td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`;
+    renderPagination('users-pagination', usersPage, Math.ceil(total/PAGE_SIZE), p => { usersPage=p; renderUsersPage(); });
+  }
+
+  function renderPagination(elId, page, pages, goFn) {
+    if (pages <= 1) { document.getElementById(elId).innerHTML = ''; return; }
+    const start = Math.max(1, page-2), end = Math.min(pages, page+2);
+    document.getElementById(elId).innerHTML =
+      `<button class="page-btn text" onclick="(${goFn.toString()})(${page-1})" ${page===1?'disabled':''}>Prev</button>` +
+      (start>1?`<button class="page-btn" onclick="(${goFn.toString()})(1)">1</button>${start>2?'<span style="padding:0 4px">…</span>':''}` : '') +
+      Array.from({length:end-start+1},(_,i)=>start+i).map(p=>`<button class="page-btn ${p===page?'active':''}" onclick="(${goFn.toString()})(${p})">${p}</button>`).join('') +
+      (end<pages?`${end<pages-1?'<span style="padding:0 4px">…</span>':''}<button class="page-btn" onclick="(${goFn.toString()})(${pages})">${pages}</button>` : '') +
+      `<button class="page-btn text" onclick="(${goFn.toString()})(${page+1})" ${page===pages?'disabled':''}>Next</button>`;
+  }
+
+  function openAddUserModal() {
+    ['au-fname','au-lname','au-username','au-email','au-password'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('au-role').value = 'student';
+    document.getElementById('add-user-modal').classList.add('open');
+  }
+  function closeAddUserModal() {
+    document.getElementById('add-user-modal').classList.remove('open');
+  }
+
+  async function addUser() {
+    const fname    = document.getElementById('au-fname').value.trim();
+    const lname    = document.getElementById('au-lname').value.trim();
+    const username = document.getElementById('au-username').value.trim();
+    const email    = document.getElementById('au-email').value.trim();
+    const password = document.getElementById('au-password').value;
+    const role     = document.getElementById('au-role').value;
+
+    if (!fname || !lname)    return toast('First and last name are required', 'error');
+    if (!username)           return toast('Username is required', 'error');
+    if (!email)              return toast('Email is required', 'error');
+    if (!password)           return toast('Password is required', 'error');
+
+    const r = await fetch('/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fname, lname, username, email, password, role })
+    });
+    const data = await r.json();
+    if (r.ok) {
+      toast(`${role.charAt(0).toUpperCase()+role.slice(1)} account created!`, 'success');
+      closeAddUserModal();
+      allUsers = []; init();
+    } else {
+      toast(data.message || 'Failed to create user', 'error');
+    }
+  }
+
+  init();
+</script>
+<!-- Hidden select kept for JS compat (filterUsers reads currentRoleFilter directly) -->
+<select id="role-filter" style="display:none"></select>
+</body>
+</html>
