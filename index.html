@@ -630,20 +630,6 @@
 
   /* ── MOBILE SLIDESHOW ── */
   @media (max-width: 600px) {
-    #mobile-slideshow {
-      position: fixed; inset: 0;
-      z-index: 300;
-      background: var(--bg);
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      overflow: hidden;
-      transition: transform 0.7s cubic-bezier(0.16,1,0.3,1);
-    }
-
-    #mobile-slideshow.slide-away {
-      transform: translateY(-100%);
-    }
-
     .slide {
       position: absolute; inset: 0;
       display: flex; flex-direction: column;
@@ -759,6 +745,22 @@
       max-height: 90vh;
       overflow-y: auto;
     }
+  }
+
+  /* slideshow always present in DOM; hidden on desktop */
+  #mobile-slideshow {
+    position: fixed; inset: 0;
+    z-index: 300;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    overflow: hidden;
+    transition: transform 0.7s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  #mobile-slideshow.slide-away {
+    transform: translateY(-100%);
+    pointer-events: none;
   }
 
   @media (min-width: 601px) {
@@ -1498,8 +1500,8 @@ async function loadReport(endpoint, containerId) {
 
 // ── MOBILE SLIDESHOW ─────────────────────────────────────────
 (function () {
-  const isMobile = () => window.innerWidth <= 600;
-  if (!isMobile()) return;
+  const el = document.getElementById('mobile-slideshow');
+  if (!el) return;
 
   const slides = document.querySelectorAll('.slide');
   const dots   = document.querySelectorAll('.slide-dot');
@@ -1517,6 +1519,8 @@ async function loadReport(endpoint, containerId) {
     if (index === slides.length - 1) {
       cta.classList.add('visible');
       clearInterval(timer);
+      // auto-dismiss after 3s on last slide if user doesn't tap
+      setTimeout(() => dismissSlideshow(), 3000);
     }
   }
 
@@ -1542,7 +1546,9 @@ async function loadReport(endpoint, containerId) {
 
   window.dismissSlideshow = function () {
     clearInterval(timer);
-    document.getElementById('mobile-slideshow').classList.add('slide-away');
+    const ss = document.getElementById('mobile-slideshow');
+    ss.classList.add('slide-away');
+    setTimeout(() => { ss.style.display = 'none'; }, 750);
   };
 })();
 
