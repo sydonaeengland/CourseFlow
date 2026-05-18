@@ -155,12 +155,12 @@ FROM users u JOIN submissions s ON u.userID = s.studID
 WHERE s.grade IS NOT NULL AND u.role = 'student'
 GROUP BY u.userID, u.username, u.fname, u.lname ORDER BY overall_average DESC LIMIT 10;
 
-CREATE INDEX IF NOT EXISTS idx_enrollments_student ON enrollments(studID);
-CREATE INDEX IF NOT EXISTS idx_enrollments_course  ON enrollments(courseID);
-CREATE INDEX IF NOT EXISTS idx_submissions_student ON submissions(studID);
-CREATE INDEX IF NOT EXISTS idx_calendar_date       ON calendar_events(event_date);
-CREATE INDEX IF NOT EXISTS idx_threads_forum       ON threads(forumID);
-CREATE INDEX IF NOT EXISTS idx_replies_thread      ON replies(threadID);
-CREATE INDEX IF NOT EXISTS idx_replies_parent      ON replies(parentID);
-CREATE INDEX IF NOT EXISTS idx_content_section     ON items(sectionID);
-CREATE INDEX IF NOT EXISTS idx_courses_lecturer    ON courses(lecturerID);
+CREATE INDEX idx_enrollments_student ON enrollments(studID);
+CREATE INDEX idx_enrollments_course  ON enrollments(courseID);
+CREATE INDEX idx_submissions_student ON submissions(studID);
+CREATE INDEX idx_calendar_date       ON calendar_events(event_date);
+CREATE INDEX idx_threads_forum       ON threads(forumID);
+CREATE INDEX idx_replies_thread      ON replies(threadID);
+CREATE INDEX idx_replies_parent      ON replies(parentID);
+CREATE INDEX idx_content_section     ON items(sectionID);
+CREATE INDEX idx_courses_lecturer    ON courses(lecturerID);
